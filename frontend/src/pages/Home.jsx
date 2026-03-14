@@ -1,7 +1,13 @@
 import React from 'react'
+import Header from '../components/Header'
+import Carrusel from '../components/Carrusel'
 
 export default function Home() {
   return (
-    <h1 className='text-4xl text-red-600 font-bold'>Home</h1>
+    <div>
+      <Header/>
+      <Carrusel/>
+    </div>
+
   )
 }
