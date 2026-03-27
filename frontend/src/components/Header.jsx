@@ -53,9 +53,9 @@ export default function Header() {
 
                 {/* Loggeo y Registro */}
                 <div className='flex items-center gap-4'>
-                    <button className='text-gray-600 hover:text-indigo-600 font-medium transition-colors'>
+                    <NavLink to='/login' className='text-gray-600 hover:text-indigo-600 font-medium transition-colors'>
                         Iniciar Sesión
-                    </button>
+                    </NavLink>
                     <button className='bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors'>
                         Registrarse
                     </button>
