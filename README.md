@@ -1,7 +1,7 @@
 # BugSolutions — Plataforma Web
 ---
 
-## 📋 Descripción del Proyecto
+## Descripción del Proyecto
 
 **BugSolutions** es una aplicación web desarrollada como solución digital para la empresa del mismo nombre, dedicada a la venta de componentes de computadores y a la prestación de servicios técnicos de mantenimiento.
 
@@ -10,7 +10,7 @@ El propósito del proyecto es brindarle a este negocio un espacio virtual desde 
 
 ---
 
-## 👥 Integrantes del Equipo
+## Integrantes del Equipo
 
 | Nombre | Rol |
 |---|---|
@@ -20,7 +20,7 @@ El propósito del proyecto es brindarle a este negocio un espacio virtual desde 
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+##Tecnologías Utilizadas
 
 | Tecnología | Descripción |
 |---|---|
@@ -32,7 +32,7 @@ El propósito del proyecto es brindarle a este negocio un espacio virtual desde 
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 frontend/
@@ -78,7 +78,7 @@ frontend/
 
 ---
 
-## ▶️ Instrucciones de Ejecución Local
+## Instrucciones de Ejecución Local
 
 ### Requisitos previos
 
@@ -116,7 +116,7 @@ http://localhost:5173
 
 ---
 
-##Funcionalidades Implementadas
+## Funcionalidades Implementadas
 
 - **Página principal** con carrusel automático y banners promocionales por categoría
 - **Header** con navegación y accesos a login/registro
@@ -147,6 +147,6 @@ const handleChange = (e) => {
 
 Este patrón se aplicó en las vistas **Login**,**RegisterPage**, **ForgotPage** y **ResetPage**, permitiendo realizar validaciones en tiempo real, mostrar mensajes de error y controlar el estado del botón de envío.
 
-## 📄 Licencia
+## Licencia
 
 Proyecto académico desarrollado para la asignatura de Arquitectura Orientada a Servicios.
