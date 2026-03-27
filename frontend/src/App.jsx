@@ -1,5 +1,6 @@
 import './App.css'
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
+import ForgotPage from './pages/Authentication/ForgotPage'
 
 //Páginas
 import Home from './pages/Home'
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path='/' element={<Home/>}></Route>
         <Route path='/login' element={<Login/>}></Route>
+        <Route path='/forgot-password' element={<ForgotPage />} />
       </Routes>
     </BrowserRouter>
   )

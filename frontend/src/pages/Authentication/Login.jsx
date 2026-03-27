@@ -151,7 +151,7 @@ export default function Login() {
                 />
                 {showPassword
                   ? <HiEyeOff onClick={togglePasswordVisibility} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-purple-500 text-lg" />
-                  : <HiEye    onClick={togglePasswordVisibility} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-purple-500 text-lg" />
+                  : <HiEye onClick={togglePasswordVisibility} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-purple-500 text-lg" />
                 }
               </div>
               {errors.password && touched.password && (
@@ -161,18 +161,16 @@ export default function Login() {
 
             {/* FORGOT PASSWORD */}
             <div className="text-right -mt-2">
-              <a href="#" className="text-purple-600 text-xs hover:underline">¿Olvidaste tu contraseña?</a>
+              <Link to="/forgot-password" className="text-purple-600 text-xs hover:underline">¿Olvidaste tu contraseña?</Link>
             </div>
-
             {/* BOTÓN LOGIN */}
             <button
               type="submit"
               disabled={!isFormValid || isLoading}
-              className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${
-                !isFormValid || isLoading
+              className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${!isFormValid || isLoading
                   ? "bg-purple-300 cursor-not-allowed"
                   : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
-              }`}
+                }`}
             >
               {!isLoading ? "Iniciar Sesión" : (
                 <div className="flex justify-center">
