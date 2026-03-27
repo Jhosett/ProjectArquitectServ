@@ -129,11 +129,6 @@ export default function ForgotPage() {
                         <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 mb-6">
                             <p className="text-purple-700 font-semibold text-sm break-all">{modalData.email}</p>
                         </div>
-                        <div className="bg-gray-50 rounded-xl p-3 text-left text-xs text-gray-500 mb-6 font-mono">
-                            <p><span className="text-purple-600 font-semibold">email:</span> {modalData.email}</p>
-                            <p><span className="text-purple-600 font-semibold">acción:</span> forgot_password</p>
-                            <p><span className="text-purple-600 font-semibold">timestamp:</span> {new Date().toLocaleString("es-CO")}</p>
-                        </div>
                         <Link
                             to="/reset-password"
                             className="block w-full py-3 rounded-xl bg-purple-700 text-white font-semibold hover:bg-purple-800 transition text-center"
