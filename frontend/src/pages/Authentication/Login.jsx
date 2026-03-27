@@ -1,21 +1,36 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import setup1 from "../../assets/fondos/setup1.jpg";
-import { HiUser, HiLockClosed, HiEye, HiEyeOff } from "react-icons/hi";
+import { HiUser, HiLockClosed, HiEye, HiEyeOff, HiArrowLeft } from "react-icons/hi";
 import { FaGoogle, FaFacebookF, FaTwitter } from "react-icons/fa";
 
 export default function Login() {
+  const navigate = useNavigate();
 
   const [loginData, setLoginData] = useState({
     email: "",
     pwd: ""
   });
 
+  useEffect(() => {
+    const saved = localStorage.getItem("demo_registered_user");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setLoginData({
+          email: parsed.email || "",
+          pwd: parsed.pwd || ""
+        });
+      } catch (e) {}
+    }
+  }, []);
+
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   const validate = () => {
 
@@ -82,6 +97,11 @@ export default function Login() {
 
       console.log("Login:", loginData);
 
+      setShowSuccessAlert(true);
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+
     } catch {
 
       setErrorMessage("Error al iniciar sesión");
@@ -100,7 +120,20 @@ export default function Login() {
     Object.keys(validate()).length === 0;
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full relative">
+
+      {/* ALERTA CUSTOM */}
+      {showSuccessAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center shadow-2xl transform scale-100">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-500">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">¡Sesión iniciada!</h2>
+            <p className="text-sm text-gray-500">Serás redirigido en un momento...</p>
+          </div>
+        </div>
+      )}
 
       {/* IMAGEN */}
       <div
@@ -109,7 +142,16 @@ export default function Login() {
       ></div>
 
       {/* FORMULARIO */}
-      <div className="flex w-full md:w-1/2 items-center justify-center bg-gray-50 px-6 py-12">
+      <div className="flex flex-col w-full md:w-1/2 items-center justify-center bg-gray-50 px-6 py-12">
+
+        {/* BOTÓN VOLVER AL INICIO */}
+        <div className="w-full max-w-md mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-purple-700 font-medium transition-colors">
+            <HiArrowLeft className="text-xl" />
+            <span>Volver al inicio</span>
+          </Link>
+        </div>
+
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg px-8 py-10">
 
           <h1 className="text-3xl font-bold text-purple-700 mb-2 text-center">Bienvenido</h1>
