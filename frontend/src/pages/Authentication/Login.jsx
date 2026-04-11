@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import setup1 from "../../assets/fondos/setup1.jpg";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff, HiArrowLeft } from "react-icons/hi";
 import { FaGoogle, FaFacebookF, FaTwitter } from "react-icons/fa";
+// Función de login definida en authService.js.
+// Internamente llama a Firebase Auth para verificar las credenciales del usuario.
+import { loginUser } from "../../services/authService";
+import Swal from "sweetalert2";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,25 +16,11 @@ export default function Login() {
     pwd: ""
   });
 
-  useEffect(() => {
-    const saved = localStorage.getItem("demo_registered_user");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setLoginData({
-          email: parsed.email || "",
-          pwd: parsed.pwd || ""
-        });
-      } catch (e) {}
-    }
-  }, []);
-
-  const [errors, setErrors] = useState({});
+const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   const validate = () => {
 
@@ -93,18 +83,44 @@ export default function Login() {
       setIsLoading(true);
       setErrorMessage("");
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // CONEXIÓN CON FIREBASE
+      // loginUser llama a signInWithEmailAndPassword en Firebase Auth.
+      // Firebase verifica las credenciales y retorna el usuario autenticado con su UID y token.
+      // Si las credenciales son incorrectas, lanza un error con un código específico.
+      await loginUser(loginData.email, loginData.pwd);
 
-      console.log("Login:", loginData);
+      // Alerta de éxito tras la autenticación exitosa en Firebase
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Sesión iniciada!',
+        text: 'Bienvenido de nuevo.',
+        confirmButtonColor: '#7c3aed',
+        timer: 1500,
+        showConfirmButton: false,
+      });
 
-      setShowSuccessAlert(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);
+      navigate("/");
 
-    } catch {
-
-      setErrorMessage("Error al iniciar sesión");
+    } catch (error) {
+      // 'auth/invalid-credential' es el código que Firebase retorna
+      // cuando el correo no existe o la contraseña es incorrecta.
+      if (error.code === 'auth/invalid-credential') {
+        setErrorMessage("Correo o contraseña incorrectos.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Credenciales incorrectas',
+          text: 'El correo o la contraseña son incorrectos.',
+          confirmButtonColor: '#7c3aed',
+        });
+      } else {
+        setErrorMessage("Error al iniciar sesión. Intenta de nuevo.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al iniciar sesión',
+          text: 'Ocurrió un problema. Por favor intenta de nuevo.',
+          confirmButtonColor: '#7c3aed',
+        });
+      }
 
     } finally {
 
@@ -121,19 +137,6 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen w-full relative">
-
-      {/* ALERTA CUSTOM */}
-      {showSuccessAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity">
-          <div className="bg-white rounded-2xl p-8 flex flex-col items-center shadow-2xl transform scale-100">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-500">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">¡Sesión iniciada!</h2>
-            <p className="text-sm text-gray-500">Serás redirigido en un momento...</p>
-          </div>
-        </div>
-      )}
 
       {/* IMAGEN */}
       <div
