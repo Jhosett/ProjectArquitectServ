@@ -48,11 +48,11 @@ Para el registro de usuarios se implementan dos cosas:
 
 ```jsx
 export const registerUser = async ({ email, password, nombre, ... }) => {
-  // Step 1 — create the user in Firebase Authentication
+  // Step 1 — Crea el usuario en Firebase Authentication
   const userCredential = await createUserWithEmailAndPassword(auth, email, password)
   const uid = userCredential.user.uid   // Firebase generates a unique ID
 
-  // Step 2 — save extra user data in Firestore (password is NEVER stored here)
+  // Step 2 — Guarda los datos del usuario Firestore (la contraseña nunca se almacene allí)
   await setDoc(doc(db, 'users', uid), {
     nombre, email, telefono, ...
     createdAt: new Date().toISOString()
