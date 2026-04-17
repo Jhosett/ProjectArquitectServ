@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import setup1 from "../../assets/fondos/setup1.jpg";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff, HiArrowLeft } from "react-icons/hi";
-import { FaGoogle, FaFacebookF, FaTwitter } from "react-icons/fa";
+import { FaFacebookF, FaGithub } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
+
 // Función de login definida en authService.js.
 // Internamente llama a Firebase Auth para verificar las credenciales del usuario.
 import { loginUser } from "../../services/authService";
@@ -244,14 +246,14 @@ const [errors, setErrors] = useState({});
                 <span className="relative bg-white px-3 text-gray-400 text-xs">O inicia sesión con</span>
               </div>
               <div className="flex justify-center gap-3">
-                <button type="button" className="w-11 h-11 rounded-full bg-red-500 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-sm">
-                  <FaGoogle />
+                <button type="button" className="w-11 h-11 rounded-full bg-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
+                  <FcGoogle />
                 </button>
-                <button type="button" className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-sm">
+                <button type="button" className="w-11 h-11 rounded-full bg-gray-800 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
+                  <FaGithub />
+                </button>
+                <button type="button" className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
                   <FaFacebookF />
-                </button>
-                <button type="button" className="w-11 h-11 rounded-full bg-sky-500 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-sm">
-                  <FaTwitter />
                 </button>
               </div>
             </div>
