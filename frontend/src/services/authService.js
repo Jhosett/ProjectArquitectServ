@@ -1,5 +1,6 @@
 import { auth, db } from '../FireBase/firebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider, GithubAuthProvider, fetchSignInMethodsForEmail,
+linkWithCredential} from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 // En este archivo se definen las funciones para el registro y login de usuarios
@@ -102,6 +103,59 @@ export const loginWithGoogle = async () => {
 
 // Revisa si al usuario autenticado con Google le faltan datos obligatorios
 export const hasMissingGoogleProfileData = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return true;
+
+  const data = userSnap.data();
+
+  return (
+    !data?.telefono?.trim() ||
+    !data?.tipoDocumento?.trim() ||
+    !data?.numeroDocumento?.trim()
+  );
+};
+
+// Esta función guarda Firestore al usuario autenticado con GitHub
+const GithubUser = async (user) => {
+  const userRef = doc(db, 'users', user.uid);
+  const userSnap = await getDoc(userRef);
+
+  const baseData = {
+    nombre: user.displayName || '',
+    email: user.email || '',
+    provider: 'github',
+    photoURL: user.photoURL || '',
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (!userSnap.exists()) {
+    await setDoc(userRef, {
+      ...baseData,
+      telefono: '',
+      tipoDocumento: '',
+      numeroDocumento: '',
+      createdAt: new Date().toISOString(),
+    });
+  } else {
+    await updateDoc(userRef, baseData);
+  }
+
+  return user;
+};
+
+// Función pública para iniciar sesión con GitHub
+export const loginWithGithub = async () => {
+  const provider = new GithubAuthProvider();
+
+  const result = await signInWithPopup(auth, provider);
+
+  return await GithubUser(result.user);
+};
+
+// Revisa si al usuario autenticado con GitHub le faltan datos obligatorios
+export const hasMissingGithubProfileData = async (uid) => {
   const userRef = doc(db, 'users', uid);
   const userSnap = await getDoc(userRef);
 
