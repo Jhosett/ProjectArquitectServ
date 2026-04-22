@@ -66,7 +66,6 @@ const GoogleUser = async (user) => {
   const baseData = {
     nombre: user.displayName || '',         // Nombre que devuelve Google
     email: user.email || '',                // Correo del usuario
-    telefono: user.phoneNumber || '',       // Teléfono si Google lo provee
     provider: 'google',                     // Indicamos que viene de Google
     photoURL: user.photoURL || '',          // Foto de perfil
     updatedAt: new Date().toISOString(),    // Fecha de última actualización
