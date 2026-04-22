@@ -7,7 +7,7 @@ import { FcGoogle } from "react-icons/fc";
 
 // Función de login definida en authService.js.
 // Internamente llama a Firebase Auth para verificar las credenciales del usuario.
-import { loginUser } from "../../services/authService";
+import { loginUser, loginWithGoogle, hasMissingGoogleProfileData } from "../../services/authService";
 import Swal from "sweetalert2";
 
 export default function Login() {
@@ -18,7 +18,7 @@ export default function Login() {
     pwd: ""
   });
 
-const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,6 +131,76 @@ const [errors, setErrors] = useState({});
     }
 
   };
+  // Esta función maneja el inicio de sesión con Google desde el botón
+  const handleGoogleLogin = async () => {
+    try {
+      // Activamos estado de carga para bloquear acciones repetidas
+      setIsLoading(true);
+
+      // Limpiamos cualquier error anterior
+      setErrorMessage("");
+
+      // Ejecutamos el login con Google y obtenemos el usuario autenticado
+      const user = await loginWithGoogle();
+
+      // Revisamos si le faltan datos obligatorios en Firestore
+      const hasMissingData = await hasMissingGoogleProfileData(user.uid);
+
+      // Si faltan datos, lo mandamos a completar perfil
+      if (hasMissingData) {
+        navigate("/complete-google-profile");
+      } else {
+        // Si ya está completo, entra normalmente
+        navigate("/");
+      }
+      // Mostramos alerta de éxito
+      await Swal.fire({
+        icon: "success",
+        title: "¡Sesión iniciada con Google!",
+        text: "Bienvenido.",
+        confirmButtonColor: "#7c3aed",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+    } catch (error) {
+      // Mostramos el error en consola para depuración
+      console.error(error);
+
+      // Caso: el correo ya existe pero registrado con otro método
+      if (error.code === "auth/account-exists-with-different-credential") {
+        setErrorMessage("Ese correo ya está registrado con otro método.");
+
+        Swal.fire({
+          icon: "warning",
+          title: "Cuenta ya existente",
+          text: "Ese correo ya está registrado con otro método de inicio de sesión.",
+          confirmButtonColor: "#7c3aed",
+        });
+
+        // Caso: el usuario cerró manualmente el popup
+      } else if (error.code === "auth/popup-closed-by-user") {
+        setErrorMessage("Se cerró la ventana de Google antes de completar el inicio de sesión.");
+
+        // Cualquier otro error general
+      } else {
+        setErrorMessage("No se pudo iniciar sesión con Google.");
+
+        Swal.fire({
+          icon: "error",
+          title: "Error con Google",
+          text: "No fue posible iniciar sesión con Google.",
+          confirmButtonColor: "#7c3aed",
+        });
+      }
+    } finally {
+      // Quitamos el loading al final, haya salido bien o mal
+      setIsLoading(false);
+    }
+
+  };
+
+
 
   const isFormValid =
     loginData.email &&
@@ -215,8 +285,8 @@ const [errors, setErrors] = useState({});
               type="submit"
               disabled={!isFormValid || isLoading}
               className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${!isFormValid || isLoading
-                  ? "bg-purple-300 cursor-not-allowed"
-                  : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
+                ? "bg-purple-300 cursor-not-allowed"
+                : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
                 }`}
             >
               {!isLoading ? "Iniciar Sesión" : (
@@ -246,8 +316,9 @@ const [errors, setErrors] = useState({});
                 <span className="relative bg-white px-3 text-gray-400 text-xs">O inicia sesión con</span>
               </div>
               <div className="flex justify-center gap-3">
-                <button type="button" className="w-11 h-11 rounded-full bg-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
+                <button type="button" onClick={handleGoogleLogin} disabled={isLoading} className="w-11 h-11 rounded-full bg-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
                   <FcGoogle />
+
                 </button>
                 <button type="button" className="w-11 h-11 rounded-full bg-gray-800 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
                   <FaGithub />
@@ -263,5 +334,8 @@ const [errors, setErrors] = useState({});
       </div>
 
     </div>
+
   );
+
+
 }

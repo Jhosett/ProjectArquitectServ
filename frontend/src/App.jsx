@@ -12,6 +12,7 @@ import Register from './pages/Authentication/Register'
 import Dashboard from './pages/Dashboard/Dashboard'
 import EditProfile from './pages/Dashboard/EditProfile'
 import ProtectedRoute from './components/ProtectedRoute'
+import CompleteGoogleProfile from './pages/Authentication/CompleteGoogleProfile'
 
 function App() {
 
@@ -23,6 +24,8 @@ function App() {
         <Route path='/forgot-password' element={<ForgotPage />} />
         <Route path='/reset-password' element={<ResetPage />} />
         <Route path='/register' element={<Register />} />
+
+        <Route path="/complete-google-profile" element={ <ProtectedRoute><CompleteGoogleProfile /></ProtectedRoute>} /> {/* completar perfil de google si faltan datos obligatorios */}
 
         {/* Rutas Privadas */}
         <Route path='/dashboard' element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
