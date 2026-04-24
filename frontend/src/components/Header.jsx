@@ -78,7 +78,7 @@ export default function Header() {
                                     <HiUserCircle className="text-2xl text-indigo-600" />
                                     <div className="flex flex-col items-start leading-tight">
                                         <span className="text-sm font-semibold text-gray-700">
-                                            {userData?.nombre || 'Usuario'}
+                                            {userData?.nombre || currentUser?.displayName || 'Usuario'}
                                         </span>
                                         <span className="text-xs text-gray-500">{currentUser.email}</span>
                                     </div>

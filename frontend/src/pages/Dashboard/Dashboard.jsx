@@ -33,7 +33,7 @@ export default function Dashboard() {
                 {/* Saludo y bienvenida */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Bienvenido, {userData?.nombre || 'Usuario'}!</h1>
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Bienvenido, {userData?.nombre || currentUser?.displayName || 'Usuario'}!</h1>
                         <p className="text-gray-500">Aquí puedes ver y gestionar tu información personal</p>
                     </div>
                     <button
@@ -61,7 +61,7 @@ export default function Dashboard() {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Nombre Completo:</p>
-                                <p className="font-medium text-gray-800">{userData?.nombre || 'No definido'}</p>
+                                <p className="font-medium text-gray-800">{userData?.nombre || currentUser?.displayName || 'No definido'}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Tipo de Documento:</p>
@@ -105,7 +105,11 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Vinculado con:</p>
-                                <p className="font-medium text-gray-800 capitalize">{providerId === 'password' ? 'Correo' : 'Proveedor Externo'}</p>
+                                <p className="font-medium text-gray-800 capitalize">
+                                    {providerId === 'password' ? 'Correo' : 
+                                     providerId === 'google.com' ? 'Google' : 
+                                     providerId === 'github.com' ? 'GitHub' : 'Proveedor Externo'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Estado de la Cuenta:</p>

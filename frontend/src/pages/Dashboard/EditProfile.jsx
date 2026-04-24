@@ -158,9 +158,13 @@ export default function EditProfile() {
                         </div>
 
                         <div>
-                            <label className="text-sm font-semibold text-gray-700 mb-1 block flex items-center justify-between">
+                            <label className="text-sm font-semibold text-gray-700 mb-1 flex items-center justify-between">
                                 Email 
-                                {isExternalAuth && <span className="text-xs text-indigo-500 bg-indigo-50 px-2 py-1 rounded">Vinculado Externamente</span>}
+                                {isExternalAuth && (
+                                    <span className="text-xs text-indigo-500 bg-indigo-50 px-2 py-1 rounded font-medium">
+                                        Vinculado con {providerId === 'google.com' ? 'Google' : providerId === 'github.com' ? 'GitHub' : 'Proveedor Externo'}
+                                    </span>
+                                )}
                             </label>
                             <input 
                                 type="email"
