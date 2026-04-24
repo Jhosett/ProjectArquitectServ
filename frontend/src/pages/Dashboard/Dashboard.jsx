@@ -22,7 +22,7 @@ export default function Dashboard() {
 
     if (loading) return null;
 
-    // Se asume providerId para lógica futura, pero aquí mostramos la vista general.
+    // Se asume providerId para lógica futura, pero aquí mostramos la vista general
     const providerId = currentUser?.providerData[0]?.providerId || 'password';
 
     return (
@@ -106,9 +106,9 @@ export default function Dashboard() {
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Vinculado con:</p>
                                 <p className="font-medium text-gray-800 capitalize">
-                                    {providerId === 'password' ? 'Correo' : 
-                                     providerId === 'google.com' ? 'Google' : 
-                                     providerId === 'github.com' ? 'GitHub' : 'Proveedor Externo'}
+                                    {providerId === 'password' ? 'Correo' :
+                                        providerId === 'google.com' ? 'Google' :
+                                            providerId === 'github.com' ? 'GitHub' : 'Proveedor Externo'}
                                 </p>
                             </div>
                             <div>
