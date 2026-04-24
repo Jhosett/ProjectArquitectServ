@@ -25,6 +25,7 @@ export default function EditProfile() {
     const providerId = currentUser?.providerData[0]?.providerId || 'password';
     const isExternalAuth = providerId !== 'password';
 
+
     useEffect(() => {
         if (userData && currentUser) {
             setFormData({
@@ -57,7 +58,7 @@ export default function EditProfile() {
                 telefono: formData.telefono,
             };
             await updateUserProfileData(currentUser.uid, profileUpdates);
-            
+
             // Actualizar estado global
             setUserData(prev => ({ ...prev, ...profileUpdates }));
 
@@ -76,8 +77,8 @@ export default function EditProfile() {
                 }
             }
 
-            if(formData.email === currentUser.email && formData.password.trim() === ""){
-               Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
+            if (formData.email === currentUser.email && formData.password.trim() === "") {
+                Swal.fire('¡Éxito!', 'Información actualizada correctamente.', 'success');
             }
 
             navigate('/dashboard');
@@ -94,7 +95,7 @@ export default function EditProfile() {
         <div className="bg-gray-50 min-h-screen">
             <Header />
             <div className="max-w-3xl mx-auto px-4 py-8">
-                
+
                 <div className="mb-6">
                     <Link to="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-indigo-600 font-medium transition-colors">
                         <HiArrowLeft className="text-xl" />
@@ -106,10 +107,10 @@ export default function EditProfile() {
                     <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Actualiza tu información</h2>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                        
+
                         <div>
                             <label className="text-sm font-semibold text-gray-700 mb-1 block">Nombre</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="nombre"
                                 value={formData.nombre}
@@ -121,7 +122,7 @@ export default function EditProfile() {
 
                         <div>
                             <label className="text-sm font-semibold text-gray-700 mb-1 block">Tipo de Documento</label>
-                            <select 
+                            <select
                                 name="tipoDocumento"
                                 value={formData.tipoDocumento}
                                 onChange={handleChange}
@@ -135,7 +136,7 @@ export default function EditProfile() {
 
                         <div>
                             <label className="text-sm font-semibold text-gray-700 mb-1 block">Número de Documento</label>
-                            <input 
+                            <input
                                 type="text"
                                 name="numeroDocumento"
                                 value={formData.numeroDocumento}
@@ -147,7 +148,7 @@ export default function EditProfile() {
 
                         <div>
                             <label className="text-sm font-semibold text-gray-700 mb-1 block">Teléfono</label>
-                            <input 
+                            <input
                                 type="tel"
                                 name="telefono"
                                 value={formData.telefono}
@@ -159,14 +160,14 @@ export default function EditProfile() {
 
                         <div>
                             <label className="text-sm font-semibold text-gray-700 mb-1 flex items-center justify-between">
-                                Email 
+                                Email
                                 {isExternalAuth && (
                                     <span className="text-xs text-indigo-500 bg-indigo-50 px-2 py-1 rounded font-medium">
                                         Vinculado con {providerId === 'google.com' ? 'Google' : providerId === 'github.com' ? 'GitHub' : 'Proveedor Externo'}
                                     </span>
                                 )}
                             </label>
-                            <input 
+                            <input
                                 type="email"
                                 name="email"
                                 value={formData.email}
@@ -183,7 +184,7 @@ export default function EditProfile() {
                         {!isExternalAuth && (
                             <div>
                                 <label className="text-sm font-semibold text-gray-700 mb-1 block">Contraseña</label>
-                                <input 
+                                <input
                                     type="password"
                                     name="password"
                                     value={formData.password}
@@ -194,7 +195,7 @@ export default function EditProfile() {
                             </div>
                         )}
 
-                        <button 
+                        <button
                             type="submit"
                             disabled={isLoading}
                             className="mt-4 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400"
@@ -203,7 +204,7 @@ export default function EditProfile() {
                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : "Actualizar"}
                         </button>
-                        
+
                     </form>
                 </div>
 
