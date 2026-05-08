@@ -1,7 +1,7 @@
 import { auth, db } from '../FireBase/firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider, GithubAuthProvider, fetchSignInMethodsForEmail,
 linkWithCredential} from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 // En este archivo se definen las funciones para el registro y login de usuarios
 
@@ -29,11 +29,45 @@ export const registerUser = async ({ nombre, tipoDocumento, numeroDocumento, tel
 // Devuelve el usuario autenticado.
 export const loginUser = async (email, pwd) => {
   const userCredential = await signInWithEmailAndPassword(auth, email, pwd);
-  return userCredential.user;
+  const user = userCredential.user;
+
+  // Guarda la sesión en la subcolección sessions del usuario
+  await addDoc(collection(db, 'users', user.uid, 'sessions'), {
+    loginAt: new Date().toISOString(),
+    logoutAt: null,
+    provider: 'email',
+    status: 'active',
+  });
+
+  return user;
 };
 
 // Cierra la sesión del usuario actual
 export const logoutUser = async () => {
+  const user = auth.currentUser;
+
+  if (user) {
+    try {
+      // Busca todas las sesiones activas sin orderBy para evitar requerir índice compuesto en Firestore
+      const sessionsRef = collection(db, 'users', user.uid, 'sessions');
+      const q = query(sessionsRef, where('status', '==', 'active'));
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        // Ordena en memoria y toma la más reciente
+        const sorted = snap.docs.sort((a, b) =>
+          new Date(b.data().loginAt) - new Date(a.data().loginAt)
+        );
+        await updateDoc(sorted[0].ref, {
+          logoutAt: new Date().toISOString(),
+          status: 'finalized',
+        });
+      }
+    } catch (error) {
+      console.error('Error al registrar logout en Firestore:', error);
+    }
+  }
+
   await signOut(auth);
 };
 
@@ -91,14 +125,19 @@ const GoogleUser = async (user) => {
 
 // Función pública para iniciar sesión con Google
 export const loginWithGoogle = async () => {
-  // Creamos una instancia del proveedor de Google
   const provider = new GoogleAuthProvider();
-
-  // Abrimos el popup de autenticación con Google
   const result = await signInWithPopup(auth, provider);
+  await GoogleUser(result.user);
 
-  // Guardamos o sincronizamos el usuario en Firestore
-  return await GoogleUser(result.user);
+  // Guarda la sesión con provider google
+  await addDoc(collection(db, 'users', result.user.uid, 'sessions'), {
+    loginAt: new Date().toISOString(),
+    logoutAt: null,
+    provider: 'google',
+    status: 'active',
+  });
+
+  return result.user;
 };
 
 // Revisa si al usuario autenticado con Google le faltan datos obligatorios
@@ -148,10 +187,18 @@ const GithubUser = async (user) => {
 // Función pública para iniciar sesión con GitHub
 export const loginWithGithub = async () => {
   const provider = new GithubAuthProvider();
-
   const result = await signInWithPopup(auth, provider);
+  await GithubUser(result.user);
 
-  return await GithubUser(result.user);
+  // Guarda la sesión con provider github
+  await addDoc(collection(db, 'users', result.user.uid, 'sessions'), {
+    loginAt: new Date().toISOString(),
+    logoutAt: null,
+    provider: 'github',
+    status: 'active',
+  });
+
+  return result.user;
 };
 
 // Revisa si al usuario autenticado con GitHub le faltan datos obligatorios
