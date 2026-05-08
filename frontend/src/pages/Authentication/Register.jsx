@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import setup2 from "../../assets/fondos/setup2.jpg";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff, HiCreditCard, HiHashtag, HiPhone, HiMail, HiArrowLeft } from "react-icons/hi";
 import { registerUser } from "../../services/authService";
+import { auth } from "../../FireBase/firebaseConfig";
+import { signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider, fetchSignInMethodsForEmail, linkWithCredential, EmailAuthProvider } from "firebase/auth";
 import Swal from "sweetalert2";
 
 export default function Register() {
@@ -126,18 +128,69 @@ export default function Register() {
             // Alerta de éxito tras el registro exitoso en Firebase
             await Swal.fire({
                 icon: 'success',
-                title: '¡Registro casi listo!',
-                text: 'Hemos enviado un enlace de verificación a tu correo. Por favor, verifica tu cuenta antes de intentar iniciar sesión (especialmente si planeas vincular tu cuenta con Google).',
+                title: '¡Registro exitoso!',
+                text: 'Tu cuenta ha sido creada correctamente. Ahora puedes iniciar sesión.',
                 confirmButtonColor: '#7c3aed',
                 confirmButtonText: 'Ir al login',
             });
 
             navigate("/login");
         } catch (error) {
-            // Firebase retorna códigos de error específicos.
-            // 'auth/email-already-in-use' indica que el correo ya tiene una cuenta registrada.
             if (error.code === 'auth/email-already-in-use') {
-                setErrorMessage("Este correo ya está registrado.");
+                try {
+                    // Verificar qué métodos de inicio de sesión tiene este correo
+                    const methods = await fetchSignInMethodsForEmail(auth, formData.email);
+                    
+                    if (methods.includes('google.com') || methods.includes('github.com') || methods.includes('facebook.com')) {
+                        let providerName = '';
+                        let ProviderClass = null;
+                        
+                        if (methods.includes('google.com')) { providerName = 'Google'; ProviderClass = GoogleAuthProvider; }
+                        else if (methods.includes('github.com')) { providerName = 'GitHub'; ProviderClass = GithubAuthProvider; }
+                        else if (methods.includes('facebook.com')) { providerName = 'Facebook'; ProviderClass = FacebookAuthProvider; }
+
+                        const result = await Swal.fire({
+                            icon: 'info',
+                            title: 'Cuenta existente',
+                            text: `Este correo ya está registrado con ${providerName}. Para añadirle tu nueva contraseña, necesitamos que inicies sesión con ${providerName} para confirmar tu identidad.`,
+                            showCancelButton: true,
+                            confirmButtonText: `Iniciar con ${providerName}`,
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#7c3aed',
+                        });
+
+                        if (result.isConfirmed) {
+                            setIsLoading(true);
+                            const provider = new ProviderClass();
+                            // Forzamos a que pida la cuenta si es Google
+                            if (providerName === 'Google') provider.setCustomParameters({ prompt: 'select_account' });
+                            
+                            // 1. Iniciar sesión con el proveedor social
+                            const userCred = await signInWithPopup(auth, provider);
+                            
+                            // 2. Vincular la contraseña que escribieron en el registro
+                            const credential = EmailAuthProvider.credential(formData.email, formData.password);
+                            await linkWithCredential(userCred.user, credential);
+                            
+                            await Swal.fire({
+                                icon: 'success',
+                                title: '¡Contraseña vinculada!',
+                                text: 'Tu contraseña ha sido vinculada exitosamente a tu cuenta existente.',
+                                confirmButtonColor: '#7c3aed',
+                            });
+                            navigate('/login');
+                            return;
+                        } else {
+                            return; // Usuario canceló
+                        }
+                    }
+                } catch (linkError) {
+                    console.error("Error vinculando:", linkError);
+                    setErrorMessage("No se pudo vincular la cuenta. " + linkError.message);
+                    return;
+                }
+
+                setErrorMessage("Este correo ya está registrado con una contraseña.");
                 Swal.fire({
                     icon: 'error',
                     title: 'Correo ya registrado',
