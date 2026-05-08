@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 // Páginas
 import Home from './pages/Home'
 import Login from './pages/Authentication/Login'
-import ForgotPage from './pages/Authentication/Forgotpage'
+import ForgotPage from './pages/Authentication/ForgotPage'
 import ResetPage from './pages/Authentication/ResetPage'
 import Register from './pages/Authentication/Register'
 
@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard/Dashboard'
 import EditProfile from './pages/Dashboard/EditProfile'
 import ProtectedRoute from './components/ProtectedRoute'
 import CompleteGoogleProfile from './pages/Authentication/CompleteGoogleProfile'
+
 
 function App() {
 
