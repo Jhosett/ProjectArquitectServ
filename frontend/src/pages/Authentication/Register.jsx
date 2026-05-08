@@ -126,8 +126,8 @@ export default function Register() {
             // Alerta de éxito tras el registro exitoso en Firebase
             await Swal.fire({
                 icon: 'success',
-                title: '¡Registro exitoso!',
-                text: 'Tu cuenta ha sido creada correctamente.',
+                title: '¡Registro casi listo!',
+                text: 'Hemos enviado un enlace de verificación a tu correo. Por favor, verifica tu cuenta antes de intentar iniciar sesión (especialmente si planeas vincular tu cuenta con Google).',
                 confirmButtonColor: '#7c3aed',
                 confirmButtonText: 'Ir al login',
             });

@@ -11,6 +11,8 @@ import {
   loginUser, loginWithGoogle, hasMissingGoogleProfileData, loginWithGithub,
   hasMissingGithubProfileData
 } from "../../services/authService";
+import { auth } from "../../FireBase/firebaseConfig";
+import { fetchSignInMethodsForEmail, linkWithCredential, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import Swal from "sweetalert2";
 
 export default function Login() {
@@ -134,6 +136,48 @@ export default function Login() {
     }
 
   };
+
+  // Función para manejar el error cuando el correo ya existe con otro método
+  const handleExistingAccount = async (error) => {
+    try {
+      const email = error.customData?.email || error.email; 
+      
+      let methods = [];
+      try {
+        methods = await fetchSignInMethodsForEmail(auth, email);
+      } catch (e) {
+        console.warn("fetchSignInMethodsForEmail falló:", e);
+      }
+      
+      let methodToUse = methods[0];
+      let providerName = "otro método";
+
+      if (methodToUse === "password") providerName = "Correo y Contraseña";
+      else if (methodToUse === "google.com") providerName = "Google";
+      else if (methodToUse === "github.com") providerName = "GitHub";
+      else if (methodToUse === "facebook.com") providerName = "Facebook";
+
+      if (methodToUse) {
+        Swal.fire({
+          icon: "info",
+          title: "Cuenta ya registrada",
+          text: `El correo ${email} ya está registrado con ${providerName}. Por favor, haz clic en el botón de ${providerName} para iniciar sesión.`,
+          confirmButtonColor: "#7c3aed",
+          confirmButtonText: "Entendido"
+        });
+      } else {
+         Swal.fire({
+          icon: "info",
+          title: "Cuenta ya registrada",
+          text: `Ese correo ya está asociado a otra cuenta. Por favor, inicia sesión con el método que usaste originalmente (Google, GitHub o Contraseña).`,
+          confirmButtonColor: "#7c3aed",
+          confirmButtonText: "Entendido"
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // Esta función maneja el inicio de sesión con Google desde el botón
   const handleGoogleLogin = async () => {
     try {
@@ -167,28 +211,14 @@ export default function Login() {
       });
 
     } catch (error) {
-      // Mostramos el error en consola para depuración
       console.error(error);
 
-      // Caso: el correo ya existe pero registrado con otro método
       if (error.code === "auth/account-exists-with-different-credential") {
-        setErrorMessage("Ese correo ya está registrado con otro método.");
-
-        Swal.fire({
-          icon: "warning",
-          title: "Cuenta ya existente",
-          text: "Ese correo ya está registrado con otro método de inicio de sesión.",
-          confirmButtonColor: "#7c3aed",
-        });
-
-        // Caso: el usuario cerró manualmente el popup
+        await handleAccountLinking(error, 'google');
       } else if (error.code === "auth/popup-closed-by-user") {
         setErrorMessage("Se cerró la ventana de Google antes de completar el inicio de sesión.");
-
-        // Cualquier otro error general
       } else {
         setErrorMessage("No se pudo iniciar sesión con Google.");
-
         Swal.fire({
           icon: "error",
           title: "Error con Google",
@@ -197,10 +227,8 @@ export default function Login() {
         });
       }
     } finally {
-      // Quitamos el loading al final, haya salido bien o mal
       setIsLoading(false);
     }
-
   };
 
   // Esta función maneja el inicio de sesión con GitHub
@@ -230,13 +258,7 @@ export default function Login() {
       console.error(error);
 
       if (error.code === "auth/account-exists-with-different-credential") {
-        setErrorMessage("Ese correo ya está registrado con otro método.");
-        Swal.fire({
-          icon: "warning",
-          title: "Cuenta ya existente",
-          text: "Ese correo ya está registrado con otro método de inicio de sesión.",
-          confirmButtonColor: "#7c3aed",
-        });
+        await handleAccountLinking(error, 'github');
       } else if (error.code === "auth/popup-closed-by-user") {
         setErrorMessage("Se cerró la ventana de GitHub antes de completar el inicio de sesión.");
       } else {
