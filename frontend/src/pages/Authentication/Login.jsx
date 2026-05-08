@@ -112,6 +112,22 @@ export default function Login() {
       // 'auth/invalid-credential' es el código que Firebase retorna
       // cuando el correo no existe o la contraseña es incorrecta.
       if (error.code === 'auth/invalid-credential') {
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, loginData.email);
+          if (methods.length > 0 && !methods.includes('password')) {
+            setErrorMessage("Esta cuenta no tiene contraseña (se creó con red social).");
+            Swal.fire({
+              icon: 'info',
+              title: 'Inicia con tu red social',
+              text: 'Esta cuenta fue creada usando Google, GitHub o Facebook y no tiene contraseña. Por favor usa el botón correspondiente abajo, o ve a "Registro" para agregarle una contraseña.',
+              confirmButtonColor: '#7c3aed',
+            });
+            return;
+          }
+        } catch (e) {
+          // Si falla fetchSignInMethodsForEmail, ignoramos y mostramos el error generico
+        }
+
         setErrorMessage("Correo o contraseña incorrectos.");
         Swal.fire({
           icon: 'error',
