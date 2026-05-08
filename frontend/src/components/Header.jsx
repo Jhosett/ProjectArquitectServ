@@ -93,6 +93,18 @@ export default function Header() {
                                         >
                                             Mi Dashboard
                                         </NavLink>
+
+                                        {/* Solo visible si el usuario tiene isAdmin: true en Firestore */}
+                                        {userData?.isAdmin && (
+                                            <NavLink
+                                                to="/admin"
+                                                onClick={() => setDropdownOpen(false)}
+                                                className="block px-4 py-2 text-sm text-indigo-700 font-semibold hover:bg-indigo-50 transition-colors"
+                                            >
+                                                Panel de Admin
+                                            </NavLink>
+                                        )}
+
                                         <div className="border-t border-gray-100 my-1"></div>
                                         <button 
                                             onClick={handleLogout}
