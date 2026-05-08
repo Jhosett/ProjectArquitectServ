@@ -75,7 +75,16 @@ export default function Header() {
                                     onClick={() => setDropdownOpen(!dropdownOpen)}
                                     className="flex items-center gap-2 border border-gray-200 px-4 py-2 rounded-full hover:shadow-sm transition-shadow focus:outline-none"
                                 >
-                                    <HiUserCircle className="text-2xl text-indigo-600" />
+                                    {userData?.photoURL || currentUser?.photoURL ? (
+                                        <img
+                                            src={userData?.photoURL || currentUser?.photoURL}
+                                            alt="Foto de perfil"
+                                            className="w-8 h-8 rounded-full object-cover border border-indigo-100"
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    ) : (
+                                        <HiUserCircle className="text-2xl text-indigo-600" />
+                                    )}
                                     <div className="flex flex-col items-start leading-tight">
                                         <span className="text-sm font-semibold text-gray-700">
                                             {userData?.nombre || currentUser?.displayName || 'Usuario'}

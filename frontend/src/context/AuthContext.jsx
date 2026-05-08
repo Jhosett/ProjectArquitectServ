@@ -35,6 +35,16 @@ export const AuthProvider = ({ children }) => {
                             }
                         }
 
+                        // Sincronizar photoURL: si Firebase Auth tiene foto pero Firestore no, la guardamos
+                        if (user.photoURL && !data.photoURL) {
+                            try {
+                                await updateDoc(doc(db, 'users', user.uid), { photoURL: user.photoURL });
+                                data.photoURL = user.photoURL;
+                            } catch (e) {
+                                console.error('Error sincronizando photoURL con Firestore:', e);
+                            }
+                        }
+
                         setUserData(data);
                     } else {
                         setUserData(null);
