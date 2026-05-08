@@ -9,7 +9,7 @@ import { FcGoogle } from "react-icons/fc";
 // Internamente llama a Firebase Auth para verificar las credenciales del usuario.
 import {
   loginUser, loginWithGoogle, hasMissingGoogleProfileData, loginWithGithub,
-  hasMissingGithubProfileData
+  hasMissingGithubProfileData, loginWithFacebook, hasMissingFacebookProfileData
 } from "../../services/authService";
 import { auth } from "../../FireBase/firebaseConfig";
 import { fetchSignInMethodsForEmail, linkWithCredential, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
@@ -275,6 +275,50 @@ export default function Login() {
     }
   };
 
+  // Esta función maneja el inicio de sesión con Facebook
+  const handleFacebookLogin = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const user = await loginWithFacebook();
+      const hasMissingData = await hasMissingFacebookProfileData(user.uid);
+
+      await Swal.fire({
+        icon: "success",
+        title: "¡Sesión iniciada con Facebook!",
+        text: "Bienvenido.",
+        confirmButtonColor: "#7c3aed",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      if (hasMissingData) {
+        navigate("/complete-google-profile");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (error.code === "auth/account-exists-with-different-credential") {
+        await handleExistingAccount(error);
+      } else if (error.code === "auth/popup-closed-by-user") {
+        setErrorMessage("Se cerró la ventana de Facebook antes de completar el inicio de sesión.");
+      } else {
+        setErrorMessage("No se pudo iniciar sesión con Facebook.");
+        Swal.fire({
+          icon: "error",
+          title: "Error con Facebook",
+          text: "No fue posible iniciar sesión con Facebook.",
+          confirmButtonColor: "#7c3aed",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isFormValid =
     loginData.email &&
     loginData.pwd &&
@@ -396,7 +440,7 @@ export default function Login() {
                 <button type="button" onClick={handleGithubLogin} disabled={isLoading} className="w-11 h-11 rounded-full bg-gray-800 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
                   <FaGithub />
                 </button>
-                <button type="button" className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
+                <button type="button" onClick={handleFacebookLogin} disabled={isLoading} className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
                   <FaFacebookF />
                 </button>
               </div>

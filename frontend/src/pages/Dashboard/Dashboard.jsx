@@ -134,7 +134,9 @@ export default function Dashboard() {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Correo Electrónico:</p>
-                                <p className="font-medium text-gray-800">{currentUser?.email}</p>
+                                <p className={`font-medium ${currentUser?.email ? 'text-gray-800' : 'text-gray-400 italic'}`}>
+                                    {currentUser?.email || 'No proporcionado'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Teléfono:</p>
