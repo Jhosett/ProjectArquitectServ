@@ -159,11 +159,15 @@ const GithubUser = async (user) => {
   const userRef = doc(db, 'users', user.uid);
   const userSnap = await getDoc(userRef);
 
+  // GitHub a veces no devuelve email ni displayName directamente en user.
+  // Los datos más completos vienen de providerData[0]
+  const githubProfile = user.providerData?.find(p => p.providerId === 'github.com') || user.providerData?.[0];
+
   const baseData = {
-    nombre: user.displayName || '',
-    email: user.email || '',
-    provider: 'github',
-    photoURL: user.photoURL || '',
+    nombre:    githubProfile?.displayName || user.displayName || '',
+    email:     githubProfile?.email       || user.email       || '',
+    provider:  'github',
+    photoURL:  githubProfile?.photoURL    || user.photoURL    || '',
     updatedAt: new Date().toISOString(),
   };
 
@@ -185,6 +189,8 @@ const GithubUser = async (user) => {
 // Función pública para iniciar sesión con GitHub
 export const loginWithGithub = async () => {
   const provider = new GithubAuthProvider();
+  // Solicita acceso al email del usuario en GitHub (necesario si lo tiene privado)
+  provider.addScope('user:email');
   const result = await signInWithPopup(auth, provider);
   await GithubUser(result.user);
 

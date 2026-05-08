@@ -292,7 +292,7 @@ export default function AdminPanel() {
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        {['Nombre', 'Apellido', 'Email', 'Entrada', 'Salida', 'Estado', 'Método'].map((h) => (
+                                        {['Nombre', 'Email', 'Entrada', 'Salida', 'Estado', 'Método'].map((h) => (
                                             <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                                                 {h}
                                             </th>
@@ -303,7 +303,6 @@ export default function AdminPanel() {
                                     {filtered.map((s) => (
                                         <tr key={`${s.uid}-${s.id}`} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-gray-800">{s.nombre}</td>
-                                            <td className="px-6 py-4 text-gray-500">{s.apellido}</td>
                                             <td className="px-6 py-4 text-gray-500">{s.email}</td>
                                             <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{formatDate(s.loginAt)}</td>
                                             <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{formatDate(s.logoutAt)}</td>
