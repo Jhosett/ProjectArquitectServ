@@ -18,6 +18,7 @@ export default function EditProfile() {
         telefono: "",
         email: "",
         password: "",
+        photoURL: "",
     });
 
     const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +35,8 @@ export default function EditProfile() {
                 numeroDocumento: userData.numeroDocumento || "",
                 telefono: userData.telefono || "",
                 email: currentUser.email || "",
-                password: "", // Siempre vacío por seguridad
+                password: "",
+                photoURL: userData.photoURL || currentUser.photoURL || "",
             });
         }
     }, [userData, currentUser]);
@@ -56,6 +58,7 @@ export default function EditProfile() {
                 tipoDocumento: formData.tipoDocumento,
                 numeroDocumento: formData.numeroDocumento,
                 telefono: formData.telefono,
+                photoURL: formData.photoURL,
             };
             await updateUserProfileData(currentUser.uid, profileUpdates);
 
@@ -194,6 +197,28 @@ export default function EditProfile() {
                                 />
                             </div>
                         )}
+
+                        {/* Campo: Foto de perfil (URL) */}
+                        <div>
+                            <label className="text-sm font-semibold text-gray-700 mb-1 block">Foto de perfil (URL)</label>
+                            {formData.photoURL && (
+                                <img
+                                    src={formData.photoURL}
+                                    alt="Preview"
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 mb-2"
+                                    onError={(e) => e.target.style.display = 'none'}
+                                />
+                            )}
+                            <input
+                                type="url"
+                                name="photoURL"
+                                value={formData.photoURL}
+                                onChange={handleChange}
+                                placeholder="https://ejemplo.com/mi-foto.jpg"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Pega la URL pública de tu imagen de perfil.</p>
+                        </div>
 
                         <button
                             type="submit"

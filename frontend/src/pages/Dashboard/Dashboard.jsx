@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Header from '../../components/Header';
-import { HiOutlineIdentification, HiOutlineMail, HiOutlinePencilAlt, HiOutlinePlusSm, HiOutlineHeart, HiLogout } from 'react-icons/hi';
+import { HiOutlineIdentification, HiOutlineMail, HiOutlinePencilAlt, HiOutlineHeart, HiLogout, HiX } from 'react-icons/hi';
 import { IoSettingsOutline } from 'react-icons/io5';
 import { FaBolt } from 'react-icons/fa6';
 import { FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
@@ -13,6 +14,8 @@ import Swal from 'sweetalert2';
 export default function Dashboard() {
     const { currentUser, userData, loading } = useAuth();
     const navigate = useNavigate();
+    const [photoModal, setPhotoModal] = useState(false);
+    const photoSrc = userData?.photoURL || currentUser?.photoURL || null;
 
     const handleLogout = async () => {
         try {
@@ -81,11 +84,60 @@ export default function Dashboard() {
             <Header />
             <div className="max-w-6xl mx-auto px-4 py-8">
 
+                {/* Modal foto ampliada */}
+                {photoModal && photoSrc && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                        onClick={() => setPhotoModal(false)}
+                    >
+                        <div className="relative" onClick={(e) => e.stopPropagation()}>
+                            <img
+                                src={photoSrc}
+                                alt="Foto de perfil ampliada"
+                                className="max-w-xs sm:max-w-sm md:max-w-md rounded-2xl shadow-2xl border-4 border-white"
+                            />
+                            <button
+                                onClick={() => setPhotoModal(false)}
+                                className="absolute -top-3 -right-3 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition"
+                            >
+                                <HiX className="text-gray-700 text-lg" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Saludo y bienvenida */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Bienvenido, {userData?.nombre || currentUser?.displayName || 'Usuario'}!</h1>
-                        <p className="text-gray-500">Aquí puedes ver y gestionar tu información personal</p>
+                    <div className="flex items-center gap-6">
+                        {/* Foto de perfil con opción de ampliar */}
+                        <div className="relative group shrink-0">
+                            {photoSrc ? (
+                                <img
+                                    src={photoSrc}
+                                    alt="Foto de perfil"
+                                    className="w-20 h-20 rounded-full object-cover border-4 border-indigo-100 shadow-sm"
+                                />
+                            ) : (
+                                <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center border-4 border-indigo-50">
+                                    <span className="text-3xl font-bold text-indigo-400">
+                                        {(userData?.nombre || currentUser?.displayName || 'U')[0].toUpperCase()}
+                                    </span>
+                                </div>
+                            )}
+                            {/* Overlay de ampliar — solo si hay foto */}
+                            {photoSrc && (
+                                <button
+                                    onClick={() => setPhotoModal(true)}
+                                    className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                >
+                                    <span className="text-white text-xs font-semibold">Ver</span>
+                                </button>
+                            )}
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Bienvenido, {userData?.nombre || currentUser?.displayName || 'Usuario'}!</h1>
+                            <p className="text-gray-500">Aquí puedes ver y gestionar tu información personal</p>
+                        </div>
                     </div>
                     <button
                         onClick={handleLogout}
