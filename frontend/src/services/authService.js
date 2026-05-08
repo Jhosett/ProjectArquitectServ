@@ -1,5 +1,5 @@
 import { auth, db } from '../FireBase/firebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider, GithubAuthProvider, fetchSignInMethodsForEmail,
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider, fetchSignInMethodsForEmail,
 linkWithCredential, sendEmailVerification} from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
@@ -159,6 +159,59 @@ export const loginWithGithub = async () => {
 
 // Revisa si al usuario autenticado con GitHub le faltan datos obligatorios
 export const hasMissingGithubProfileData = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return true;
+
+  const data = userSnap.data();
+
+  return (
+    !data?.telefono?.trim() ||
+    !data?.tipoDocumento?.trim() ||
+    !data?.numeroDocumento?.trim()
+  );
+};
+
+// Esta función guarda en Firestore al usuario autenticado con Facebook
+const FacebookUser = async (user) => {
+  const userRef = doc(db, 'users', user.uid);
+  const userSnap = await getDoc(userRef);
+
+  const baseData = {
+    nombre: user.displayName || '',
+    email: user.email || '',
+    provider: 'facebook',
+    photoURL: user.photoURL || '',
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (!userSnap.exists()) {
+    await setDoc(userRef, {
+      ...baseData,
+      telefono: '',
+      tipoDocumento: '',
+      numeroDocumento: '',
+      createdAt: new Date().toISOString(),
+    });
+  } else {
+    await updateDoc(userRef, baseData);
+  }
+
+  return user;
+};
+
+// Función pública para iniciar sesión con Facebook
+export const loginWithFacebook = async () => {
+  const provider = new FacebookAuthProvider();
+
+  const result = await signInWithPopup(auth, provider);
+
+  return await FacebookUser(result.user);
+};
+
+// Revisa si al usuario autenticado con Facebook le faltan datos obligatorios
+export const hasMissingFacebookProfileData = async (uid) => {
   const userRef = doc(db, 'users', uid);
   const userSnap = await getDoc(userRef);
 
