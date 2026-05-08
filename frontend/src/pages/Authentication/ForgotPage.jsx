@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import setup1 from "../../assets/fondos/setup1.jpg";
 import { HiMail, HiArrowLeft, HiCheckCircle } from "react-icons/hi";
+import { resetPasswordByEmail } from "../../services/authService";
 
 export default function ForgotPage() {
     const [email, setEmail] = useState("");
@@ -27,11 +28,29 @@ export default function ForgotPage() {
         if (!isFormValid) return;
 
         setIsLoading(true);
-        await new Promise((r) => setTimeout(r, 1800));
-        setIsLoading(false);
 
-        setModalData({ email });
-        setShowModal(true);
+        try {
+            await resetPasswordByEmail(email);
+
+            setModalData({ email });
+            setShowModal(true);
+        } catch (error) {
+            console.error("Error al enviar correo de recuperación:", error);
+
+            let message = "No se pudo enviar el correo de recuperación.";
+
+            if (error.code === "auth/user-not-found") {
+                message = "No existe una cuenta registrada con este correo.";
+            } else if (error.code === "auth/invalid-email") {
+                message = "El correo ingresado no es válido.";
+            } else if (error.code === "auth/too-many-requests") {
+                message = "Demasiados intentos. Intenta más tarde.";
+            }
+
+            alert(message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -94,8 +113,8 @@ export default function ForgotPage() {
                             type="submit"
                             disabled={!isFormValid || isLoading}
                             className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${!isFormValid || isLoading
-                                    ? "bg-purple-300 cursor-not-allowed"
-                                    : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
+                                ? "bg-purple-300 cursor-not-allowed"
+                                : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
                                 }`}
                         >
                             {isLoading ? (
@@ -130,10 +149,10 @@ export default function ForgotPage() {
                             <p className="text-purple-700 font-semibold text-sm break-all">{modalData.email}</p>
                         </div>
                         <Link
-                            to="/reset-password"
+                            to="/login"
                             className="block w-full py-3 rounded-xl bg-purple-700 text-white font-semibold hover:bg-purple-800 transition text-center"
                         >
-                            Continuar
+                            Volver al inicio de sesión
                         </Link>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import { auth, db } from '../FireBase/firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider, fetchSignInMethodsForEmail,
-linkWithCredential, sendEmailVerification} from 'firebase/auth';
+linkWithCredential, sendEmailVerification, sendPasswordResetEmail} from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 // En este archivo se definen las funciones para el registro y login de usuarios
@@ -224,4 +224,7 @@ export const hasMissingFacebookProfileData = async (uid) => {
     !data?.tipoDocumento?.trim() ||
     !data?.numeroDocumento?.trim()
   );
+};
+export const resetPasswordByEmail = async (email) => {
+  await sendPasswordResetEmail(auth, email);
 };
