@@ -1,6 +1,6 @@
 import { auth, db } from '../FireBase/firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,  signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider, fetchSignInMethodsForEmail,
-linkWithCredential, sendEmailVerification, sendPasswordResetEmail} from 'firebase/auth';
+linkWithCredential, sendEmailVerification, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode} from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 // En este archivo se definen las funciones para el registro y login de usuarios
@@ -225,6 +225,23 @@ export const hasMissingFacebookProfileData = async (uid) => {
     !data?.numeroDocumento?.trim()
   );
 };
+
+// Envía el correo de recuperación de contraseña
 export const resetPasswordByEmail = async (email) => {
-  await sendPasswordResetEmail(auth, email);
+  const actionCodeSettings = {
+    url: `${window.location.origin}/reset-password`,
+    handleCodeInApp: false,
+  };
+
+  await sendPasswordResetEmail(auth, email, actionCodeSettings);
+};
+
+// Verifica si el código del enlace de recuperación es válido
+export const verifyResetPasswordCode = async (oobCode) => {
+  return await verifyPasswordResetCode(auth, oobCode);
+};
+
+// Confirma el cambio de contraseña
+export const confirmNewPassword = async (oobCode, newPassword) => {
+  await confirmPasswordReset(auth, oobCode, newPassword);
 };
