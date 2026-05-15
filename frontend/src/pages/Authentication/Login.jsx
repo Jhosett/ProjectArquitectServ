@@ -1,8 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import setup1 from "../../assets/fondos/setup1.jpg";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff, HiArrowLeft } from "react-icons/hi";
-import { FaGoogle, FaFacebookF, FaTwitter } from "react-icons/fa";
+import { FaFacebookF, FaGithub } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
+
+// Función de login definida en authService.js.
+// Internamente llama a Firebase Auth para verificar las credenciales del usuario.
+import {
+  loginUser, loginWithGoogle, hasMissingGoogleProfileData, loginWithGithub,
+  hasMissingGithubProfileData, loginWithFacebook, hasMissingFacebookProfileData
+} from "../../services/authService";
+import { auth } from "../../FireBase/firebaseConfig";
+import { fetchSignInMethodsForEmail, linkWithCredential, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
+import Swal from "sweetalert2";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,25 +23,11 @@ export default function Login() {
     pwd: ""
   });
 
-  useEffect(() => {
-    const saved = localStorage.getItem("demo_registered_user");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setLoginData({
-          email: parsed.email || "",
-          pwd: parsed.pwd || ""
-        });
-      } catch (e) {}
-    }
-  }, []);
-
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   const validate = () => {
 
@@ -93,18 +90,60 @@ export default function Login() {
       setIsLoading(true);
       setErrorMessage("");
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // CONEXIÓN CON FIREBASE
+      // loginUser llama a signInWithEmailAndPassword en Firebase Auth.
+      // Firebase verifica las credenciales y retorna el usuario autenticado con su UID y token.
+      // Si las credenciales son incorrectas, lanza un error con un código específico.
+      await loginUser(loginData.email, loginData.pwd);
 
-      console.log("Login:", loginData);
+      // Alerta de éxito tras la autenticación exitosa en Firebase
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Sesión iniciada!',
+        text: 'Bienvenido de nuevo.',
+        confirmButtonColor: '#7c3aed',
+        timer: 1500,
+        showConfirmButton: false,
+      });
 
-      setShowSuccessAlert(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);
+      navigate("/");
 
-    } catch {
+    } catch (error) {
+      // 'auth/invalid-credential' es el código que Firebase retorna
+      // cuando el correo no existe o la contraseña es incorrecta.
+      if (error.code === 'auth/invalid-credential') {
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, loginData.email);
+          if (methods.length > 0 && !methods.includes('password')) {
+            setErrorMessage("Esta cuenta no tiene contraseña (se creó con red social).");
+            Swal.fire({
+              icon: 'info',
+              title: 'Inicia con tu red social',
+              text: 'Esta cuenta fue creada usando Google, GitHub o Facebook y no tiene contraseña. Por favor usa el botón correspondiente abajo, o ve a "Registro" para agregarle una contraseña.',
+              confirmButtonColor: '#7c3aed',
+            });
+            return;
+          }
+        } catch (e) {
+          // Si falla fetchSignInMethodsForEmail, ignoramos y mostramos el error generico
+        }
 
-      setErrorMessage("Error al iniciar sesión");
+        setErrorMessage("Correo o contraseña incorrectos.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Credenciales incorrectas',
+          text: 'El correo o la contraseña son incorrectos.',
+          confirmButtonColor: '#7c3aed',
+        });
+      } else {
+        setErrorMessage("Error al iniciar sesión. Intenta de nuevo.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al iniciar sesión',
+          text: 'Ocurrió un problema. Por favor intenta de nuevo.',
+          confirmButtonColor: '#7c3aed',
+        });
+      }
 
     } finally {
 
@@ -114,6 +153,188 @@ export default function Login() {
 
   };
 
+  // Función para manejar el error cuando el correo ya existe con otro método
+  const handleExistingAccount = async (error) => {
+    try {
+      const email = error.customData?.email || error.email; 
+      
+      let methods = [];
+      try {
+        methods = await fetchSignInMethodsForEmail(auth, email);
+      } catch (e) {
+        console.warn("fetchSignInMethodsForEmail falló:", e);
+      }
+      
+      let methodToUse = methods[0];
+      let providerName = "otro método";
+
+      if (methodToUse === "password") providerName = "Correo y Contraseña";
+      else if (methodToUse === "google.com") providerName = "Google";
+      else if (methodToUse === "github.com") providerName = "GitHub";
+      else if (methodToUse === "facebook.com") providerName = "Facebook";
+
+      if (methodToUse) {
+        Swal.fire({
+          icon: "info",
+          title: "Cuenta ya registrada",
+          text: `El correo ${email} ya está registrado con ${providerName}. Por favor, haz clic en el botón de ${providerName} para iniciar sesión.`,
+          confirmButtonColor: "#7c3aed",
+          confirmButtonText: "Entendido"
+        });
+      } else {
+         Swal.fire({
+          icon: "info",
+          title: "Cuenta ya registrada",
+          text: `Ese correo ya está asociado a otra cuenta. Por favor, inicia sesión con el método que usaste originalmente (Google, GitHub o Contraseña).`,
+          confirmButtonColor: "#7c3aed",
+          confirmButtonText: "Entendido"
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // Esta función maneja el inicio de sesión con Google desde el botón
+  const handleGoogleLogin = async () => {
+    try {
+      // Activamos estado de carga para bloquear acciones repetidas
+      setIsLoading(true);
+
+      // Limpiamos cualquier error anterior
+      setErrorMessage("");
+
+      // Ejecutamos el login con Google y obtenemos el usuario autenticado
+      const user = await loginWithGoogle();
+
+      // Revisamos si le faltan datos obligatorios en Firestore
+      const hasMissingData = await hasMissingGoogleProfileData(user.uid);
+
+      // Si faltan datos, lo mandamos a completar perfil
+      if (hasMissingData) {
+        navigate("/complete-google-profile");
+      } else {
+        // Si ya está completo, entra normalmente
+        navigate("/");
+      }
+      // Mostramos alerta de éxito
+      await Swal.fire({
+        icon: "success",
+        title: "¡Sesión iniciada con Google!",
+        text: "Bienvenido.",
+        confirmButtonColor: "#7c3aed",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      if (error.code === "auth/account-exists-with-different-credential") {
+        await handleAccountLinking(error, 'google');
+      } else if (error.code === "auth/popup-closed-by-user") {
+        setErrorMessage("Se cerró la ventana de Google antes de completar el inicio de sesión.");
+      } else {
+        setErrorMessage("No se pudo iniciar sesión con Google.");
+        Swal.fire({
+          icon: "error",
+          title: "Error con Google",
+          text: "No fue posible iniciar sesión con Google.",
+          confirmButtonColor: "#7c3aed",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Esta función maneja el inicio de sesión con GitHub
+  const handleGithubLogin = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const user = await loginWithGithub();
+      const hasMissingData = await hasMissingGithubProfileData(user.uid);
+
+      await Swal.fire({
+        icon: "success",
+        title: "¡Sesión iniciada con GitHub!",
+        text: "Bienvenido.",
+        confirmButtonColor: "#7c3aed",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      if (hasMissingData) {
+        navigate("/complete-google-profile");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (error.code === "auth/account-exists-with-different-credential") {
+        await handleAccountLinking(error, 'github');
+      } else if (error.code === "auth/popup-closed-by-user") {
+        setErrorMessage("Se cerró la ventana de GitHub antes de completar el inicio de sesión.");
+      } else {
+        setErrorMessage("No se pudo iniciar sesión con GitHub.");
+        Swal.fire({
+          icon: "error",
+          title: "Error con GitHub",
+          text: "No fue posible iniciar sesión con GitHub.",
+          confirmButtonColor: "#7c3aed",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Esta función maneja el inicio de sesión con Facebook
+  const handleFacebookLogin = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const user = await loginWithFacebook();
+      const hasMissingData = await hasMissingFacebookProfileData(user.uid);
+
+      await Swal.fire({
+        icon: "success",
+        title: "¡Sesión iniciada con Facebook!",
+        text: "Bienvenido.",
+        confirmButtonColor: "#7c3aed",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      if (hasMissingData) {
+        navigate("/complete-google-profile");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+
+      if (error.code === "auth/account-exists-with-different-credential") {
+        await handleExistingAccount(error);
+      } else if (error.code === "auth/popup-closed-by-user") {
+        setErrorMessage("Se cerró la ventana de Facebook antes de completar el inicio de sesión.");
+      } else {
+        setErrorMessage("No se pudo iniciar sesión con Facebook.");
+        Swal.fire({
+          icon: "error",
+          title: "Error con Facebook",
+          text: "No fue posible iniciar sesión con Facebook.",
+          confirmButtonColor: "#7c3aed",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isFormValid =
     loginData.email &&
     loginData.pwd &&
@@ -121,19 +342,6 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen w-full relative">
-
-      {/* ALERTA CUSTOM */}
-      {showSuccessAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity">
-          <div className="bg-white rounded-2xl p-8 flex flex-col items-center shadow-2xl transform scale-100">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 text-green-500">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">¡Sesión iniciada!</h2>
-            <p className="text-sm text-gray-500">Serás redirigido en un momento...</p>
-          </div>
-        </div>
-      )}
 
       {/* IMAGEN */}
       <div
@@ -210,8 +418,8 @@ export default function Login() {
               type="submit"
               disabled={!isFormValid || isLoading}
               className={`w-full py-3 rounded-xl font-semibold text-white transition-all ${!isFormValid || isLoading
-                  ? "bg-purple-300 cursor-not-allowed"
-                  : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
+                ? "bg-purple-300 cursor-not-allowed"
+                : "bg-purple-700 hover:bg-purple-800 hover:shadow-md"
                 }`}
             >
               {!isLoading ? "Iniciar Sesión" : (
@@ -241,14 +449,15 @@ export default function Login() {
                 <span className="relative bg-white px-3 text-gray-400 text-xs">O inicia sesión con</span>
               </div>
               <div className="flex justify-center gap-3">
-                <button type="button" className="w-11 h-11 rounded-full bg-red-500 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-sm">
-                  <FaGoogle />
+                <button type="button" onClick={handleGoogleLogin} disabled={isLoading} className="w-11 h-11 rounded-full bg-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
+                  <FcGoogle />
+
                 </button>
-                <button type="button" className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-sm">
+                <button type="button" onClick={handleGithubLogin} disabled={isLoading} className="w-11 h-11 rounded-full bg-gray-800 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
+                  <FaGithub />
+                </button>
+                <button type="button" onClick={handleFacebookLogin} disabled={isLoading} className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-xl">
                   <FaFacebookF />
-                </button>
-                <button type="button" className="w-11 h-11 rounded-full bg-sky-500 text-white flex items-center justify-center hover:-translate-y-1 transition shadow-sm">
-                  <FaTwitter />
                 </button>
               </div>
             </div>
@@ -258,5 +467,8 @@ export default function Login() {
       </div>
 
     </div>
+
   );
+
+
 }

@@ -1,13 +1,20 @@
 import './App.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
-
-//Páginas
+// Páginas
 import Home from './pages/Home'
 import Login from './pages/Authentication/Login'
-import ForgotPage from './pages/Authentication/Forgotpage'
+import ForgotPage from './pages/Authentication/ForgotPage'
 import ResetPage from './pages/Authentication/ResetPage'
 import Register from './pages/Authentication/Register'
+
+// Nuevas Páginas y Componentes
+import Dashboard from './pages/Dashboard/Dashboard'
+import EditProfile from './pages/Dashboard/EditProfile'
+import ProtectedRoute from './components/ProtectedRoute'
+import CompleteGoogleProfile from './pages/Authentication/CompleteGoogleProfile'
+import AdminPanel from './pages/AdminPanel'
+
 
 function App() {
 
@@ -19,6 +26,13 @@ function App() {
         <Route path='/forgot-password' element={<ForgotPage />} />
         <Route path='/reset-password' element={<ResetPage />} />
         <Route path='/register' element={<Register />} />
+
+        <Route path="/complete-google-profile" element={ <ProtectedRoute><CompleteGoogleProfile /></ProtectedRoute>} /> {/* completar perfil de google si faltan datos obligatorios */}
+
+        {/* Rutas Privadas */}
+        <Route path='/dashboard' element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path='/dashboard/edit' element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path='/admin' element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )

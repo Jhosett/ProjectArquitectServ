@@ -2,6 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import setup2 from "../../assets/fondos/setup2.jpg";
 import { HiUser, HiLockClosed, HiEye, HiEyeOff, HiCreditCard, HiHashtag, HiPhone, HiMail, HiArrowLeft } from "react-icons/hi";
+import { registerUser } from "../../services/authService";
+import { auth } from "../../FireBase/firebaseConfig";
+import { signInWithPopup, GoogleAuthProvider, GithubAuthProvider, FacebookAuthProvider, fetchSignInMethodsForEmail, linkWithCredential, EmailAuthProvider } from "firebase/auth";
+import Swal from "sweetalert2";
 
 export default function Register() {
     const navigate = useNavigate();
@@ -21,13 +25,15 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const validate = (data = formData) => {
         const newErrors = {};
 
         if (!data.nombre.trim()) newErrors.nombre = "Campo obligatorio";
         if (!data.numeroDocumento.trim()) newErrors.numeroDocumento = "Campo obligatorio";
-        
+
         if (!data.telefono.trim()) {
             newErrors.telefono = "Campo obligatorio";
         } else if (!/^\d+$/.test(data.telefono)) {
@@ -73,7 +79,7 @@ export default function Register() {
             ...formData,
             [name]: type === "checkbox" ? checked : value
         };
-        
+
         setFormData(newData);
         if (touched[name]) {
             setErrors(validate(newData));
@@ -84,7 +90,7 @@ export default function Register() {
         setTouched(prev => ({
             ...prev, nombre: true, numeroDocumento: true, telefono: true
         }));
-        
+
         const currentErrors = validate(formData);
         if (!currentErrors.nombre && !currentErrors.numeroDocumento && !currentErrors.telefono) {
             setActiveTab("cuenta");
@@ -94,9 +100,9 @@ export default function Register() {
     const handleBack = () => setActiveTab("personales");
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
-        
+
         const allTouched = Object.keys(formData).reduce((acc, key) => { acc[key] = true; return acc; }, {});
         setTouched(allTouched);
 
@@ -106,13 +112,103 @@ export default function Register() {
             return;
         }
 
-        // Guardar para uso de prueba en el login 
-        localStorage.setItem("demo_registered_user", JSON.stringify({
-            email: formData.email,
-            pwd: formData.password
-        }));
+        try {
+            setIsLoading(true);
+            setErrorMessage("");
 
-        navigate("/login");
+            // CONEXIÓN CON FIREBASE
+            // registerUser(formData) ejecuta dos operaciones en Firebase:
+            // 1. createUserWithEmailAndPassword → crea el usuario en Firebase Authentication
+            //    con email y contraseña. Firebase genera un UID único para ese usuario.
+            // 2. setDoc → guarda los datos del perfil (nombre, teléfono, etc.) en la
+            //    colección "users" de Firestore, usando el UID como ID del documento.
+            //    La contraseña NUNCA se almacena en Firestore, solo en Firebase Auth.
+            await registerUser(formData);
+
+            // Alerta de éxito tras el registro exitoso en Firebase
+            await Swal.fire({
+                icon: 'success',
+                title: '¡Registro exitoso!',
+                text: 'Tu cuenta ha sido creada correctamente. Ahora puedes iniciar sesión.',
+                confirmButtonColor: '#7c3aed',
+                confirmButtonText: 'Ir al login',
+            });
+
+            navigate("/login");
+        } catch (error) {
+            if (error.code === 'auth/email-already-in-use') {
+                try {
+                    // Verificar qué métodos de inicio de sesión tiene este correo
+                    const methods = await fetchSignInMethodsForEmail(auth, formData.email);
+                    
+                    if (methods.includes('google.com') || methods.includes('github.com') || methods.includes('facebook.com')) {
+                        let providerName = '';
+                        let ProviderClass = null;
+                        
+                        if (methods.includes('google.com')) { providerName = 'Google'; ProviderClass = GoogleAuthProvider; }
+                        else if (methods.includes('github.com')) { providerName = 'GitHub'; ProviderClass = GithubAuthProvider; }
+                        else if (methods.includes('facebook.com')) { providerName = 'Facebook'; ProviderClass = FacebookAuthProvider; }
+
+                        const result = await Swal.fire({
+                            icon: 'info',
+                            title: 'Cuenta existente',
+                            text: `Este correo ya está registrado con ${providerName}. Para añadirle tu nueva contraseña, necesitamos que inicies sesión con ${providerName} para confirmar tu identidad.`,
+                            showCancelButton: true,
+                            confirmButtonText: `Iniciar con ${providerName}`,
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#7c3aed',
+                        });
+
+                        if (result.isConfirmed) {
+                            setIsLoading(true);
+                            const provider = new ProviderClass();
+                            // Forzamos a que pida la cuenta si es Google
+                            if (providerName === 'Google') provider.setCustomParameters({ prompt: 'select_account' });
+                            
+                            // 1. Iniciar sesión con el proveedor social
+                            const userCred = await signInWithPopup(auth, provider);
+                            
+                            // 2. Vincular la contraseña que escribieron en el registro
+                            const credential = EmailAuthProvider.credential(formData.email, formData.password);
+                            await linkWithCredential(userCred.user, credential);
+                            
+                            await Swal.fire({
+                                icon: 'success',
+                                title: '¡Contraseña vinculada!',
+                                text: 'Tu contraseña ha sido vinculada exitosamente a tu cuenta existente.',
+                                confirmButtonColor: '#7c3aed',
+                            });
+                            navigate('/login');
+                            return;
+                        } else {
+                            return; // Usuario canceló
+                        }
+                    }
+                } catch (linkError) {
+                    console.error("Error vinculando:", linkError);
+                    setErrorMessage("No se pudo vincular la cuenta. " + linkError.message);
+                    return;
+                }
+
+                setErrorMessage("Este correo ya está registrado con una contraseña.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Correo ya registrado',
+                    text: 'Este correo ya tiene una cuenta asociada.',
+                    confirmButtonColor: '#7c3aed',
+                });
+            } else {
+                setErrorMessage("Error al registrar. Intenta de nuevo.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al registrar',
+                    text: 'Ocurrió un problema. Por favor intenta de nuevo.',
+                    confirmButtonColor: '#7c3aed',
+                });
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const isFormValid =
@@ -133,7 +229,7 @@ export default function Register() {
             ></div>
 
             <div className="flex flex-col w-full md:w-1/2 items-center justify-center bg-gray-50 px-6 py-12">
-                
+
                 {/* BOTÓN VOLVER AL INICIO */}
                 <div className="w-full max-w-md mb-6">
                     <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-purple-700 font-medium transition-colors">
@@ -331,12 +427,20 @@ export default function Register() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={!isFormValid}
+                                        disabled={!isFormValid || isLoading}
                                         className="w-2/3 py-3 rounded-xl font-semibold transition-all text-sm flex items-center justify-center text-white disabled:bg-gray-300 disabled:cursor-not-allowed enabled:bg-purple-700 enabled:hover:bg-purple-800"
                                     >
-                                        Registrarse
+                                        {isLoading ? (
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : "Registrarse"}
                                     </button>
                                 </div>
+
+                                {errorMessage && (
+                                    <div className="bg-red-50 text-red-600 border border-red-200 p-3 rounded-xl text-sm text-center">
+                                        {errorMessage}
+                                    </div>
+                                )}
                             </>
                         )}
 
