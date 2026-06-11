@@ -14,6 +14,7 @@ import EditProfile from './pages/Dashboard/EditProfile'
 import ProtectedRoute from './components/ProtectedRoute'
 import CompleteGoogleProfile from './pages/Authentication/CompleteGoogleProfile'
 import AdminPanel from './pages/AdminPanel'
+import Tienda from './pages/Tienda'
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path='/' element={<Home />}></Route>
+        <Route path='/tienda' element={<Tienda />}></Route>
         <Route path='/login' element={<Login />}></Route>
         <Route path='/forgot-password' element={<ForgotPage />} />
         <Route path='/reset-password' element={<ResetPage />} />
