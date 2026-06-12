@@ -55,7 +55,9 @@ export const getProducts = async () => {
     
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
-      let imagenURL = data.imagenURL;
+      // Normaliza el campo de imagen: productos del JSON usan 'imagenURL',
+      // productos creados desde AddProducts usan 'imagen'
+      let imagenURL = data.imagenURL || data.imagen || '';
       
       // Corregir URLs rotas dinámicamente con las imágenes solicitadas por el usuario
       if (doc.id === 'prod_02' || doc.id === 'prod_03') { // Ratones a imagen del Logitech G502

@@ -705,6 +705,7 @@ export default function Tienda() {
                           src={prod.imagenURL}
                           alt={prod.nombre}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={e => { e.target.src = ''; e.target.style.display = 'none'; }}
                         />
 
                         {/* BOTÓN DE WISHLIST INTERACTIVO */}
@@ -736,7 +737,7 @@ export default function Tienda() {
                       <div className="p-5 flex-grow flex flex-col">
                         <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                           <span>{prod.marca}</span>
-                          <span className="text-amber-500 font-medium">⭐ {prod.calificacion}</span>
+                          <span className="text-amber-500 font-medium">⭐ {prod.calificacion ?? '—'}</span>
                         </div>
 
                         <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors line-clamp-1">
@@ -848,9 +849,10 @@ export default function Tienda() {
                       >
                         <div className="flex items-center gap-3">
                           <img
-                            src={item.imagenURL}
+                            src={item.imagenURL || item.imagen}
                             alt={item.nombre}
                             className="w-12 h-12 rounded-xl object-cover border border-gray-200 bg-white"
+                            onError={e => e.target.style.display = 'none'}
                           />
                           <div>
                             <h4 className="font-bold text-gray-800 text-xs sm:text-sm line-clamp-1">{item.nombre}</h4>
