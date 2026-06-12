@@ -9,49 +9,17 @@ import {
   orderBy, 
   limit 
 } from 'firebase/firestore';
-import initialProducts from '../../productos_gamer.json';
 
 // Colecciones en Firestore
 const PRODUCTS_COLLECTION = 'products';
 const INVOICES_COLLECTION = 'invoices';
 
 /**
- * Siembra los productos del archivo JSON local a la colección de Firestore
- * si y solo si la colección de Firestore está vacía.
- */
-export const seedProducts = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    if (querySnapshot.empty) {
-      console.log('Sembrando productos en Firestore...');
-      for (const prod of initialProducts) {
-        // Usamos el id del JSON como el ID de documento en Firestore
-        await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), {
-          ...prod,
-          createdAt: new Date().toISOString()
-        });
-      }
-      console.log('Productos sembrados con éxito.');
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('Error al sembrar productos en Firestore:', error);
-    throw error;
-  }
-};
-
-/**
- * Obtiene todos los productos de Firestore. Si no hay productos,
- * realiza la siembra y vuelve a cargarlos.
+ * Obtiene todos los productos de Firestore.
  */
 export const getProducts = async () => {
   try {
-    let querySnapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    if (querySnapshot.empty) {
-      await seedProducts();
-      querySnapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    }
+    const querySnapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
     
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
@@ -72,10 +40,16 @@ export const getProducts = async () => {
         imagenURL = 'https://redragon.es/content/uploads/2021/05/S101-BA_Combo.jpg';
       }
 
+      // Normaliza la categoría para coincidir con los filtros de la tienda
+      let categoria = (data.categoria || '').toLowerCase().trim();
+      if (categoria === 'monitores') categoria = 'pantallas';
+      if (categoria === 'combos') categoria = 'combos-perifericos';
+
       return {
         id: doc.id,
         ...data,
-        imagenURL
+        imagenURL,
+        categoria
       };
     });
   } catch (error) {
