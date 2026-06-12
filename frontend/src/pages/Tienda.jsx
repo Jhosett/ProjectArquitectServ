@@ -467,22 +467,24 @@ export default function Tienda() {
 
           {/* Botones de acción */}
           <div className="flex gap-2 shrink-0 w-full md:w-auto justify-end">
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 px-4 py-2 rounded-xl font-bold flex items-center justify-center gap-2 text-xs transition-all shadow-sm"
-            >
-              {showHistory ? (
-                <>
-                  <HiShoppingCart className="text-base" />
-                  <span>Ver Catálogo</span>
-                </>
-              ) : (
-                <>
-                  <MdHistory className="text-base" />
-                  <span>Ver Facturas ({invoices.length})</span>
-                </>
-              )}
-            </button>
+            {currentUser?.email === 'djbermudezr@ufpso.edu.co' && (
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 px-4 py-2 rounded-xl font-bold flex items-center justify-center gap-2 text-xs transition-all shadow-sm"
+              >
+                {showHistory ? (
+                  <>
+                    <HiShoppingCart className="text-base" />
+                    <span>Ver Catálogo</span>
+                  </>
+                ) : (
+                  <>
+                    <MdHistory className="text-base" />
+                    <span>Ver Facturas ({invoices.length})</span>
+                  </>
+                )}
+              </button>
+            )}
 
             <button
               onClick={() => setIsCartOpen(true)}
