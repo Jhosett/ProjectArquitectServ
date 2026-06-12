@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import CompleteGoogleProfile from './pages/Authentication/CompleteGoogleProfile'
 import AdminPanel from './pages/AdminPanel'
 import Tienda from './pages/Tienda'
+import AddProducts from './pages/Dashboard/AddProducts'
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         {/* Rutas Privadas */}
         <Route path='/dashboard' element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path='/dashboard/edit' element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+        <Route path='/dashboard/products' element={<ProtectedRoute><AddProducts /></ProtectedRoute>} />
         <Route path='/admin' element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
