@@ -5,6 +5,8 @@ import { FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
 import { HiMail, HiSearch, HiUsers, HiStatusOnline, HiShieldCheck, HiCalendar, HiX } from 'react-icons/hi';
 import { MdOutlineLogout } from 'react-icons/md';
 import Header from '../components/Header';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const providerIcon = {
     google:   <FaGoogle    className="text-red-500"   />,
@@ -90,6 +92,37 @@ export default function AdminPanel() {
         const matchTo       = !dateTo   || (sessionDate && sessionDate <= new Date(dateTo + 'T23:59:59'));
         return matchName && matchEmail && matchStatus && matchProvider && matchFrom && matchTo;
     });
+
+    const exportToPDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('Reporte de Sesiones de Usuarios', 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generado el: ${new Date().toLocaleString('es-CO')}`, 14, 28);
+        doc.text(`Total de registros: ${filtered.length}`, 14, 34);
+
+        const tableColumn = ['Nombre', 'Email', 'Entrada', 'Salida', 'Estado', 'Método'];
+        const tableRows = filtered.map(s => [
+            `${s.nombre} ${s.apellido !== '—' ? s.apellido : ''}`.trim(),
+            s.email,
+            formatDate(s.loginAt),
+            formatDate(s.logoutAt),
+            s.status === 'active' ? 'Activo' : 'Finalizado',
+            providerLabel[s.provider] || 'Email'
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229] },
+            styles: { fontSize: 9 },
+        });
+
+        doc.save(`reporte_sesiones_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
 
     const totalSessions  = sessions.length;
     const activeSessions = sessions.filter(s => s.status === 'active').length;
@@ -268,12 +301,20 @@ export default function AdminPanel() {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
                     {/* Tabla header con contador */}
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-4">
                         <h2 className="text-sm font-semibold text-gray-700">Sesiones registradas</h2>
                         {!loading && (
-                            <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                                {filtered.length} resultado{filtered.length !== 1 ? 's' : ''}
-                            </span>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                                    {filtered.length} resultado{filtered.length !== 1 ? 's' : ''}
+                                </span>
+                                <button
+                                    onClick={exportToPDF}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
+                                >
+                                    Exportar PDF
+                                </button>
+                            </div>
                         )}
                     </div>
 

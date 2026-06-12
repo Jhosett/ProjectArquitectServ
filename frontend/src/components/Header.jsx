@@ -103,8 +103,8 @@ export default function Header() {
                                             Mi Dashboard
                                         </NavLink>
 
-                                        {/* Solo visible si el usuario tiene isAdmin: true en Firestore */}
-                                        {userData?.isAdmin && (
+                                        {/* Solo visible si el usuario tiene el correo del administrador */}
+                                        {currentUser?.email === 'djbermudezr@ufpso.edu.co' && (
                                             <NavLink
                                                 to="/admin"
                                                 onClick={() => setDropdownOpen(false)}

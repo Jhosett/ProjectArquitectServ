@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Header from '../../components/Header';
 import { HiOutlineIdentification, HiOutlineMail, HiOutlinePencilAlt, HiOutlineHeart, HiLogout, HiX } from 'react-icons/hi';
+import { MdOutlineInventory2 } from 'react-icons/md';
 import { IoSettingsOutline } from 'react-icons/io5';
 import { FaBolt } from 'react-icons/fa6';
 import { FaGoogle, FaGithub, FaFacebookF } from 'react-icons/fa';
@@ -288,6 +289,12 @@ export default function Dashboard() {
                         <HiOutlineHeart className="text-3xl text-emerald-500" />
                         <span className="font-medium">Lista de Deseos</span>
                     </div>
+                    {userData?.isAdmin && (
+                        <Link to="/dashboard/products" className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-2 hover:border-indigo-300 hover:shadow-md text-gray-600 hover:text-indigo-600 transition-all cursor-pointer">
+                            <MdOutlineInventory2 className="text-3xl text-indigo-500" />
+                            <span className="font-medium">Gestionar Productos</span>
+                        </Link>
+                    )}
                 </div>
 
             </div>
