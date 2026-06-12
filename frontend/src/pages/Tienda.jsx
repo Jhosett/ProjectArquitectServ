@@ -176,6 +176,7 @@ export default function Tienda() {
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
         Toast.fire({ icon: 'success', title: 'Añadido a tu lista de deseos' });
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar la lista de deseos.' });
     }
