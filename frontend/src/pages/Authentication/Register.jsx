@@ -50,8 +50,15 @@ export default function Register() {
 
         if (!data.password) {
             newErrors.password = "Campo obligatorio";
-        } else if (data.password.length < 6) {
-            newErrors.password = "Mínimo 6 caracteres";
+        } else if (
+            data.password.length < 8 ||
+            !/[A-Z]/.test(data.password) ||
+            !/[a-z]/.test(data.password) ||
+            !/\d/.test(data.password) ||
+            !/[!@#$%^&*(),.?":{}|<>]/.test(data.password)
+        ) {
+            // Registra el error interno para deshabilitar el botón, pero sin alertar texto molesto
+            newErrors.password = "La contraseña no cumple con los requisitos.";
         }
 
         if (!data.confirmPassword) {
@@ -140,11 +147,11 @@ export default function Register() {
                 try {
                     // Verificar qué métodos de inicio de sesión tiene este correo
                     const methods = await fetchSignInMethodsForEmail(auth, formData.email);
-                    
+
                     if (methods.includes('google.com') || methods.includes('github.com') || methods.includes('facebook.com')) {
                         let providerName = '';
                         let ProviderClass = null;
-                        
+
                         if (methods.includes('google.com')) { providerName = 'Google'; ProviderClass = GoogleAuthProvider; }
                         else if (methods.includes('github.com')) { providerName = 'GitHub'; ProviderClass = GithubAuthProvider; }
                         else if (methods.includes('facebook.com')) { providerName = 'Facebook'; ProviderClass = FacebookAuthProvider; }
@@ -164,14 +171,14 @@ export default function Register() {
                             const provider = new ProviderClass();
                             // Forzamos a que pida la cuenta si es Google
                             if (providerName === 'Google') provider.setCustomParameters({ prompt: 'select_account' });
-                            
+
                             // 1. Iniciar sesión con el proveedor social
                             const userCred = await signInWithPopup(auth, provider);
-                            
+
                             // 2. Vincular la contraseña que escribieron en el registro
                             const credential = EmailAuthProvider.credential(formData.email, formData.password);
                             await linkWithCredential(userCred.user, credential);
-                            
+
                             await Swal.fire({
                                 icon: 'success',
                                 title: '¡Contraseña vinculada!',
@@ -381,9 +388,47 @@ export default function Register() {
                                             : <HiEye onClick={togglePasswordVisibility} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-purple-500 text-lg" />
                                         }
                                     </div>
-                                    {errors.password && touched.password && <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>}
-                                </div>
 
+                                    {/* Muestra "Campo obligatorio" solo si el usuario sale del input y está vacío */}
+                                    {errors.password && touched.password && !formData.password && (
+                                        <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>
+                                    )}
+
+                                    {/* Lista dinámica de condiciones */}
+                                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 flex flex-col gap-1.5 mt-2">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Requisitos de seguridad:</p>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={formData.password.length >= 8 ? "text-green-600 font-semibold" : "text-red-500 font-medium"}>
+                                                {formData.password.length >= 8 ? "✓" : "✕"} Mínimo 8 caracteres
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={/[A-Z]/.test(formData.password) ? "text-green-600 font-semibold" : "text-red-500 font-medium"}>
+                                                {/[A-Z]/.test(formData.password) ? "✓" : "✕"} Una mayúscula
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={/[a-z]/.test(formData.password) ? "text-green-600 font-semibold" : "text-red-500 font-medium"}>
+                                                {/[a-z]/.test(formData.password) ? "✓" : "✕"} Una minúscula
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={/\d/.test(formData.password) ? "text-green-600 font-semibold" : "text-red-500 font-medium"}>
+                                                {/\d/.test(formData.password) ? "✓" : "✕"} Un número
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? "text-green-600 font-semibold" : "text-red-500 font-medium"}>
+                                                {/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? "✓" : "✕"} Un carácter especial (!@#$...)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div>
                                     <div className="relative">
                                         <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
