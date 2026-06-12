@@ -3,14 +3,15 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getProducts, createInvoice, getInvoices } from '../services/productService';
 import { useAuth } from '../context/AuthContext';
+
 import Swal from 'sweetalert2';
-import { 
-  HiSearch, 
-  HiShoppingCart, 
-  HiTrash, 
-  HiPlus, 
-  HiMinus, 
-  HiReceiptTax, 
+import {
+  HiSearch,
+  HiShoppingCart,
+  HiTrash,
+  HiPlus,
+  HiMinus,
+  HiReceiptTax,
   HiOutlineEmojiSad,
   HiCheckCircle,
   HiChevronDown,
@@ -19,19 +20,22 @@ import {
   HiUser,
   HiPhone,
   HiMail,
-  HiIdentification
+  HiIdentification,
+  HiHeart,
+  HiOutlineHeart
 } from 'react-icons/hi';
 import { MdHistory } from 'react-icons/md';
+import { addToWishlist, removeFromWishlist } from '../services/wishlistService';
 
 export default function Tienda() {
   const { currentUser, userData } = useAuth();
-  
+
   // State for products and invoices
   const [products, setProducts] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
-  
+
   // Shopping Cart state
   const [cart, setCart] = useState(() => {
     const localCart = localStorage.getItem('bugsolutions_cart');
@@ -44,6 +48,7 @@ export default function Tienda() {
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
+  const [showOnlyWishlist, setShowOnlyWishlist] = useState(false);
 
   // Client simulated form for invoice (prefilled with user data if logged in)
   const [clientForm, setClientForm] = useState({
@@ -145,6 +150,35 @@ export default function Tienda() {
       icon: 'success',
       title: `${product.nombre} añadido al carrito`
     });
+  };
+
+  const handleToggleWishlist = async (productId) => {
+    if (!currentUser) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Inicia Sesión',
+        text: 'Debes estar autenticado para guardar productos en tu lista de deseos.',
+        confirmButtonColor: '#4f46e5'
+      });
+      return;
+    }
+
+    // Comprobamos si el ID ya existe en el array 'wishlist' de las credenciales del usuario
+    const isFavorite = userData?.wishlist?.includes(productId);
+
+    try {
+      if (isFavorite) {
+        await removeFromWishlist(currentUser.uid, productId);
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        Toast.fire({ icon: 'success', title: 'Eliminado de la lista de deseos' });
+      } else {
+        await addToWishlist(currentUser.uid, productId);
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        Toast.fire({ icon: 'success', title: 'Añadido a tu lista de deseos' });
+      }
+    } catch (error) {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar la lista de deseos.' });
+    }
   };
 
   // Remove one item/quantity
@@ -258,7 +292,7 @@ export default function Tienda() {
       });
 
       const newInvoice = await createInvoice(invoiceData);
-      
+
       // Clear Cart
       setCart([]);
       refreshInvoices();
@@ -343,11 +377,12 @@ export default function Tienda() {
 
   // Filtering products
   const filteredProducts = products.filter((prod) => {
-    const matchesSearch = prod.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          prod.marca.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          prod.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = prod.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prod.marca.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prod.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'todos' || prod.categoria === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesWishlist = !showOnlyWishlist || (userData?.wishlist?.includes(prod.id));
+    return matchesSearch && matchesCategory && matchesWishlist;
   });
 
   const toggleInvoiceExpand = (id) => {
@@ -396,15 +431,28 @@ export default function Tienda() {
               {/* Categorías horizontal scroller */}
               <div className="w-full md:w-auto flex-grow overflow-x-auto scrollbar-none py-1">
                 <div className="flex gap-2 min-w-max">
+                  <button
+                    onClick={() => {
+                      setShowOnlyWishlist(!showOnlyWishlist);
+                      setSelectedCategory('todos');
+                    }}
+                    className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${showOnlyWishlist
+                      ? 'bg-red-500 text-white shadow-md shadow-red-100'
+                      : 'bg-red-50 text-red-600 hover:bg-red-100'
+                      }`}
+                  >
+                    <HiHeart className="text-sm" />
+                    <span>Mis Favoritos ({userData?.wishlist?.length || 0})</span>
+                  </button>
                   {categories.map((cat) => (
                     <button
                       key={cat.value}
+                      disabled={showOnlyWishlist}
                       onClick={() => setSelectedCategory(cat.value)}
-                      className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                        selectedCategory === cat.value
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                      className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${selectedCategory === cat.value
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
                     >
                       {cat.label}
                     </button>
@@ -465,7 +513,7 @@ export default function Tienda() {
                 </h2>
                 <p className="text-xs text-gray-400 mt-1">Registradas de forma simulada en Firestore</p>
               </div>
-              <button 
+              <button
                 onClick={refreshInvoices}
                 className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"
               >
@@ -483,7 +531,7 @@ export default function Tienda() {
                 <HiOutlineEmojiSad className="text-5xl text-gray-300 mb-3" />
                 <p className="text-gray-500 font-medium">No se han generado facturas en Firestore aún.</p>
                 <p className="text-xs text-gray-400 mt-1">Simula una compra en la sección de tienda.</p>
-                <button 
+                <button
                   onClick={() => setShowHistory(false)}
                   className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors"
                 >
@@ -495,11 +543,11 @@ export default function Tienda() {
                 {invoices.map((inv) => {
                   const isExpanded = expandedInvoiceId === inv.id;
                   return (
-                    <div 
-                      key={inv.id} 
+                    <div
+                      key={inv.id}
                       className="border border-gray-100 rounded-2xl bg-gray-50 overflow-hidden transition-all duration-200"
                     >
-                      <div 
+                      <div
                         onClick={() => toggleInvoiceExpand(inv.id)}
                         className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white cursor-pointer hover:bg-gray-50 transition-colors gap-4"
                       >
@@ -519,7 +567,7 @@ export default function Tienda() {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-4 self-end sm:self-auto">
                           <div className="text-right">
                             <span className="text-sm font-bold text-indigo-600 block">
@@ -614,7 +662,9 @@ export default function Tienda() {
             <section className="w-full">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-800">Catálogo de Productos</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {showOnlyWishlist ? 'Mis Productos Favoritos' : 'Catálogo de Productos'}
+                  </h2>
                   <p className="text-xs text-gray-400 mt-1">
                     Mostrando {filteredProducts.length} de {products.length} productos
                   </p>
@@ -636,7 +686,11 @@ export default function Tienda() {
                 <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-sm flex flex-col items-center">
                   <HiOutlineEmojiSad className="text-5xl text-gray-300 mb-3" />
                   <p className="text-gray-500 font-medium">No se encontraron productos coincidentes.</p>
-                  <p className="text-xs text-gray-400 mt-1">Prueba cambiando tu búsqueda o filtro.</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {showOnlyWishlist
+                      ? 'Aún no has guardado productos en tus favoritos o tu sesión expiró.'
+                      : 'Prueba cambiando tu búsqueda o filtro.'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -645,19 +699,35 @@ export default function Tienda() {
                       key={prod.id}
                       className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
                     >
-                      {/* Imagen con badge */}
+                      {/* Imagen con badges superpuestos */}
                       <div className="relative overflow-hidden bg-gray-100 aspect-video md:aspect-square max-h-48">
                         <img
                           src={prod.imagenURL}
                           alt={prod.nombre}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
+
+                        {/* BOTÓN DE WISHLIST INTERACTIVO */}
+                        <button
+                          onClick={() => handleToggleWishlist(prod.id)}
+                          className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm p-1.5 rounded-full shadow-md text-red-500 hover:bg-white transition-all transform active:scale-95"
+                        >
+                          {userData?.wishlist?.includes(prod.id) ? (
+                            <HiHeart className="text-xl text-red-500" />
+                          ) : (
+                            <HiOutlineHeart className="text-xl text-gray-500 hover:text-red-500" />
+                          )}
+                        </button>
+
+                        {/* BADGE DESTACADO */}
                         {prod.destacado && (
-                          <span className="absolute top-3 left-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                          <span className="absolute top-3 left-3 z-10 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
                             ★ Destacado
                           </span>
                         )}
-                        <span className="absolute top-3 right-3 bg-gray-900 bg-opacity-70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize">
+
+                        {/* BADGE CATEGORÍA */}
+                        <span className="absolute bottom-3 right-3 z-10 bg-gray-900 bg-opacity-70 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize">
                           {prod.categoria}
                         </span>
                       </div>
@@ -668,11 +738,11 @@ export default function Tienda() {
                           <span>{prod.marca}</span>
                           <span className="text-amber-500 font-medium">⭐ {prod.calificacion}</span>
                         </div>
-                        
+
                         <h3 className="font-bold text-gray-800 text-base group-hover:text-indigo-600 transition-colors line-clamp-1">
                           {prod.nombre}
                         </h3>
-                        
+
                         <p className="text-xs text-gray-500 mt-2 line-clamp-2 flex-grow">
                           {prod.descripcion}
                         </p>
@@ -686,13 +756,12 @@ export default function Tienda() {
                           </div>
 
                           <div className="text-right">
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full block ${
-                              prod.stock > 10 
-                                ? 'bg-green-50 text-green-600' 
-                                : prod.stock > 0 
-                                  ? 'bg-amber-50 text-amber-600' 
-                                  : 'bg-red-50 text-red-600'
-                            }`}>
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full block ${prod.stock > 10
+                              ? 'bg-green-50 text-green-600'
+                              : prod.stock > 0
+                                ? 'bg-amber-50 text-amber-600'
+                                : 'bg-red-50 text-red-600'
+                              }`}>
                               {prod.stock > 0 ? `${prod.stock} disponibles` : 'Sin stock'}
                             </span>
                           </div>
@@ -722,7 +791,7 @@ export default function Tienda() {
       {isCartOpen && (
         <div className="fixed inset-0 z-50 flex justify-end font-sans">
           {/* Overlay de fondo */}
-          <div 
+          <div
             onClick={() => setIsCartOpen(false)}
             className="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity"
           ></div>
@@ -742,8 +811,8 @@ export default function Tienda() {
                   </p>
                 </div>
               </div>
-              
-              <button 
+
+              <button
                 onClick={() => setIsCartOpen(false)}
                 className="text-gray-400 hover:text-gray-600 bg-white p-2 rounded-xl border border-gray-100 hover:shadow-sm transition-all text-xs font-semibold"
               >
@@ -763,24 +832,24 @@ export default function Tienda() {
                 <>
                   <div className="flex justify-between items-center pb-2">
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Artículos agregados</span>
-                    <button 
+                    <button
                       onClick={clearCart}
                       className="text-xs text-red-500 hover:text-red-600 font-semibold flex items-center gap-1"
                     >
                       <HiTrash /> Vaciar carrito
                     </button>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {cart.map((item) => (
-                      <div 
+                      <div
                         key={item.id}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <img 
-                            src={item.imagenURL} 
-                            alt={item.nombre} 
+                          <img
+                            src={item.imagenURL}
+                            alt={item.nombre}
                             className="w-12 h-12 rounded-xl object-cover border border-gray-200 bg-white"
                           />
                           <div>
@@ -794,7 +863,7 @@ export default function Tienda() {
                         <div className="flex items-center gap-3">
                           {/* Controles de cantidad */}
                           <div className="flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
-                            <button 
+                            <button
                               onClick={() => decreaseQuantity(item.id)}
                               className="p-1.5 hover:bg-gray-50 text-gray-500 active:scale-95 transition-transform"
                             >
@@ -803,16 +872,16 @@ export default function Tienda() {
                             <span className="px-2 text-xs font-bold text-gray-700 min-w-6 text-center">
                               {item.quantity}
                             </span>
-                            <button 
+                            <button
                               onClick={() => increaseQuantity(item.id, item.stock)}
                               className="p-1.5 hover:bg-gray-50 text-gray-500 active:scale-95 transition-transform"
                             >
                               <HiPlus className="text-xs" />
                             </button>
                           </div>
-                          
+
                           {/* Eliminar item */}
-                          <button 
+                          <button
                             onClick={() => removeFromCart(item.id)}
                             className="text-red-500 hover:text-red-600 p-1 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all"
                           >
@@ -835,12 +904,12 @@ export default function Tienda() {
                 <form onSubmit={handleCheckout} className="space-y-3">
                   <div className="relative">
                     <HiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       name="nombre"
                       value={clientForm.nombre}
                       onChange={handleClientInputChange}
-                      placeholder="Nombre del cliente" 
+                      placeholder="Nombre del cliente"
                       required
                       className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
@@ -860,12 +929,12 @@ export default function Tienda() {
                     </select>
                     <div className="col-span-2 relative">
                       <HiIdentification className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         name="numeroDocumento"
                         value={clientForm.numeroDocumento}
                         onChange={handleClientInputChange}
-                        placeholder="N° Documento" 
+                        placeholder="N° Documento"
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
@@ -874,23 +943,23 @@ export default function Tienda() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="relative">
                       <HiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         name="telefono"
                         value={clientForm.telefono}
                         onChange={handleClientInputChange}
-                        placeholder="Teléfono" 
+                        placeholder="Teléfono"
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
                     <div className="relative">
                       <HiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         name="email"
                         value={clientForm.email}
                         onChange={handleClientInputChange}
-                        placeholder="Correo" 
+                        placeholder="Correo"
                         required
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 bg-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
