@@ -251,7 +251,7 @@ export default function Tienda() {
       Swal.fire({
         icon: 'warning',
         title: 'Datos Faltantes',
-        text: 'Por favor ingresa al menos Nombre y Correo del cliente de prueba.',
+        text: 'Por favor ingresa al menos Nombre y Correo.',
         confirmButtonColor: '#4f46e5'
       });
       return;
@@ -284,7 +284,7 @@ export default function Tienda() {
     try {
       Swal.fire({
         title: 'Generando factura...',
-        text: 'Guardando datos de prueba en Firestore',
+        text: 'Guardando datos en Firestore',
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
@@ -341,7 +341,7 @@ export default function Tienda() {
             </div>
             
             <div class="mt-4 text-center text-xs text-gray-400">
-              <p>Factura de prueba guardada en Firestore</p>
+              <p>Factura guardada en Firestore</p>
               <p class="text-[10px] break-all font-mono">${newInvoice.id}</p>
             </div>
           </div>
@@ -397,11 +397,8 @@ export default function Tienda() {
         {/* Banner de Bienvenida */}
         <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-700 text-white rounded-3xl p-8 mb-6 shadow-xl relative overflow-hidden flex justify-between items-center">
           <div className="z-10">
-            <span className="bg-indigo-500 bg-opacity-40 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
-              Módulo de Prueba
-            </span>
             <h1 className="text-3xl md:text-4xl font-extrabold mt-3 tracking-tight">
-              Tienda Virtual Gamer
+              BugSolutions
             </h1>
             <p className="text-indigo-100 text-sm mt-2 max-w-2xl">
               Explora periféricos gamer, añádelos al carrito y simula una compra generando facturas reales almacenadas en Firestore.
@@ -463,7 +460,7 @@ export default function Tienda() {
           ) : (
             <div className="flex items-center gap-2 text-indigo-700 font-bold text-sm sm:text-base">
               <MdHistory className="text-xl" />
-              <span>Facturas de Prueba Guardadas</span>
+              <span>Facturas Guardadas</span>
             </div>
           )}
 
@@ -509,7 +506,7 @@ export default function Tienda() {
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
               <div>
                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                  <MdHistory className="text-indigo-600 text-2xl" /> Historial de Facturas de Prueba
+                  <MdHistory className="text-indigo-600 text-2xl" /> Historial de Facturas
                 </h2>
                 <p className="text-xs text-gray-400 mt-1">Registradas de forma simulada en Firestore</p>
               </div>
@@ -897,11 +894,11 @@ export default function Tienda() {
               )}
             </div>
 
-            {/* Formulario Cliente de Prueba (siempre visible si hay productos) */}
+            {/* Formulario Cliente (siempre visible si hay productos) */}
             {cart.length > 0 && (
               <div className="p-6 border-t border-gray-100 bg-gray-50">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-3">
-                  Datos de Facturación (Prueba)
+                  Datos de Facturación
                 </span>
                 <form onSubmit={handleCheckout} className="space-y-3">
                   <div className="relative">
@@ -989,7 +986,7 @@ export default function Tienda() {
                     type="submit"
                     className="w-full mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md active:scale-[0.98]"
                   >
-                    Generar Factura de Prueba
+                    Generar Factura
                   </button>
                 </form>
               </div>
