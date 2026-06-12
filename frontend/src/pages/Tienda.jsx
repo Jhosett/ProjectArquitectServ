@@ -401,7 +401,7 @@ export default function Tienda() {
               BugSolutions
             </h1>
             <p className="text-indigo-100 text-sm mt-2 max-w-2xl">
-              Explora periféricos gamer, añádelos al carrito y simula una compra generando facturas reales almacenadas en Firestore.
+              Explora periféricos gamer, añádelos al carrito y disfruta de ser un verdadero gamer.
             </p>
           </div>
 
